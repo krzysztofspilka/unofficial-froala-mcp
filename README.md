@@ -27,21 +27,9 @@ flowchart LR
 
 The assistant sends the project's `package.json` and receives setup code that matches the installed versions of Froala, Vite, Next.js, Nuxt or Angular. After writing the code, it sends the changed files to be checked. The server requires no account or API key, and every tool is read-only.
 
-## Connect your AI tool
+## Run the server locally
 
-Each AI tool connects to the hosted server in its own way.
-
-| AI tool | How to connect |
-|---|---|
-| Claude Code | `claude mcp add --transport http froala https://mcp.froala.com/mcp` |
-| Claude (web and desktop) | Use the **Add to Claude** button above |
-| Cursor | Use the **Add to Cursor** button above |
-| VS Code | Use the **Install in VS Code** button above |
-| Codex | `codex mcp add froala --url https://mcp.froala.com/mcp` |
-| Gemini CLI | `gemini mcp add --transport http froala https://mcp.froala.com/mcp` |
-| Windsurf and other clients | Add the URL as a Streamable HTTP server (in Windsurf, the field is `serverUrl`) |
-
-To run the server locally instead, use the npm package, which requires Node.js 20 or newer. For example, run `claude mcp add froala -- npx -y @froala/mcp`, or add the following to a JSON configuration file.
+To run the server on your own machine instead of using the hosted server, use the npm package, which requires Node.js 20 or newer. For example, run `claude mcp add froala -- npx -y @froala/mcp`, or add the following to a JSON configuration file.
 
 ```json
 {
