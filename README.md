@@ -39,11 +39,11 @@ To run the server on your own machine instead of using the hosted server, use th
 }
 ```
 
-## Try Froala for free
+## Build with Froala
 
-- On localhost, Froala works fully without a license key or registration.
-- On any other domain without a key, including preview deployments, the editor displays an unlicensed banner and only bold, italic and underline are available.
-- To evaluate Froala on a public domain, request a free 30-day [trial key](https://froala.com/get-trial-key/). A [license](https://froala.com/wysiwyg-editor/pricing/) is required before going to production. The `froala_licensing` tool explains where the key belongs in each framework.
+- On localhost, Froala works fully without a license key.
+- On other domains, including preview deployments, Froala needs a trial or license key in the `key` setting. Without one, the editor shows an unlicensed banner and only bold, italic and underline are available.
+- The `froala_licensing` tool explains where the key belongs in each framework, and the [activation guide](https://froala.com/wysiwyg-editor/docs/activation/) describes how keys work.
 
 ## Tools
 
@@ -56,7 +56,7 @@ To run the server on your own machine instead of using the hosted server, use th
 | `froala_lookup` | Describes options, plugins, toolbar buttons, events and methods | `kind`, `name` or `names` |
 | `froala_search_docs` | Searches the Froala documentation and examples | `query` |
 | `froala_get_page` | Returns a documentation page or one of its sections | `url` |
-| `froala_licensing` | Explains the free trial and where the license key belongs | none |
+| `froala_licensing` | Explains license keys and where they belong in each framework | none |
 
 `froala_check_code` reports errors (confirmed problems), warnings (likely problems that should be confirmed) and tips (optional improvements). Two prompts are also available. `add-froala` guides an assistant through adding Froala to a project, and `review-froala` guides it through reviewing existing Froala code.
 
