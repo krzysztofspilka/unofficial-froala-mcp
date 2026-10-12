@@ -1,0 +1,14 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "froala-mcp",
+  "main": "src/worker.ts",
+  "compatibility_date": "2026-09-01",
+  "compatibility_flags": ["nodejs_compat"],
+  // The licensing text is bundled as plain text.
+  "rules": [{ "type": "Text", "globs": ["**/*.md"], "fallthrough": true }],
+  // 120 requests a minute per IP address.
+  "ratelimits": [{ "name": "RATE_LIMITER", "namespace_id": "1001", "simple": { "limit": 120, "period": 60 } }],
+  "observability": { "enabled": true }
+  // For the official deployment, add a route for mcp.froala.com, for example:
+  // "routes": [{ "pattern": "mcp.froala.com", "custom_domain": true }]
+}

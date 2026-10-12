@@ -1,0 +1,62 @@
+{
+  "name": "@froala/mcp",
+  "version": "0.1.0",
+  "description": "MCP server for the Froala WYSIWYG editor. Lets AI coding assistants set up Froala, check Froala code and search the Froala docs.",
+  "type": "module",
+  "mcpName": "com.froala/mcp",
+  "bin": {
+    "froala-mcp": "dist/stdio.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "build:data": "npm run build:docs && npm run build:metadata && npm run check:data",
+    "build:metadata": "node scripts/build-metadata.mjs",
+    "build:docs": "node scripts/build-docs.mjs",
+    "typecheck": "tsc",
+    "test": "vitest run",
+    "smoke": "node scripts/smoke.mjs",
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "inspect": "npm run build && npx @modelcontextprotocol/inspector node dist/stdio.js",
+    "prepublishOnly": "npm run check:data && npm run typecheck && npm test && npm run build",
+    "check:data": "node scripts/check-data.mjs"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/froala/froala-mcp.git"
+  },
+  "homepage": "https://github.com/froala/froala-mcp#readme",
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "froala",
+    "wysiwyg",
+    "rich-text-editor",
+    "ai"
+  ],
+  "devDependencies": {
+    "@babel/parser": "^8.0.7",
+    "@modelcontextprotocol/client": "^2.3.1",
+    "@modelcontextprotocol/server": "^2.3.1",
+    "@types/node": "^26.6.5",
+    "@types/semver": "^7.8.0",
+    "cheerio": "^1.2.0",
+    "esbuild": "^0.28.2",
+    "froala-editor": "^5.5.0",
+    "jsdom": "^29.1.1",
+    "minisearch": "^7.2.0",
+    "semver": "^7.8.5",
+    "turndown": "^7.2.4",
+    "typescript": "^7.0.2",
+    "vitest": "^5.0.4",
+    "wrangler": "^4.149.0",
+    "zod": "^4.6.6"
+  }
+}
