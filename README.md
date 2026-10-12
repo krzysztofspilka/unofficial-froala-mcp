@@ -11,7 +11,6 @@ This is an early release. Please report any issues to support@froala.com. Thank 
 [![Install in VS Code Insiders](https://img.shields.io/badge/VS_Code_Insiders-Install_Server-24bfa5?style=for-the-badge&logo=visualstudiocode&logoColor=white)](https://insiders.vscode.dev/redirect/mcp/install?name=froala&config=%7B%22type%22%3A%22http%22%2C%22url%22%3A%22https%3A%2F%2Fmcp.froala.com%2Fmcp%22%7D&quality=insiders)
 [![Add to Claude](https://img.shields.io/badge/Claude-Add_connector-D97757?style=for-the-badge&logo=anthropic&logoColor=white)](https://claude.ai/customize/connectors?modal=add-custom-connector&connectorName=Froala&connectorUrl=https%3A%2F%2Fmcp.froala.com%2Fmcp)
 [![npm version](https://img.shields.io/npm/v/@froala/mcp?style=for-the-badge)](https://www.npmjs.com/package/@froala/mcp)
-[![npm downloads](https://img.shields.io/npm/dw/@froala/mcp?style=for-the-badge)](https://www.npmjs.com/package/@froala/mcp)
 [![License MIT](https://img.shields.io/badge/license-MIT-blue?style=for-the-badge)](LICENSE)
 [![MCP server](https://img.shields.io/badge/MCP-server-5865F2?style=for-the-badge&logo=modelcontextprotocol&logoColor=white)](https://modelcontextprotocol.io)
 
