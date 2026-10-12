@@ -12,8 +12,13 @@ This is an early release. Please report any issues to support@froala.com. Thank 
 [![Add to Claude](https://img.shields.io/badge/Claude-Add_connector-D97757?style=for-the-badge&logo=anthropic&logoColor=white)](https://claude.ai/customize/connectors?modal=add-custom-connector&connectorName=Froala&connectorUrl=https%3A%2F%2Fmcp.froala.com%2Fmcp)
 [![MCP server](https://img.shields.io/badge/MCP-server-5865F2?style=for-the-badge&logo=modelcontextprotocol&logoColor=white)](https://modelcontextprotocol.io)
 
-> [!TIP]
-> The hosted server is available at **`https://mcp.froala.com/mcp`**. Add this URL to any AI tool that supports remote MCP servers, or use one of the buttons above.
+## Hosted server
+
+```text
+https://mcp.froala.com/mcp
+```
+
+Add this URL to any AI tool that supports remote MCP servers, or use one of the installation buttons above.
 
 ## How it works
 
