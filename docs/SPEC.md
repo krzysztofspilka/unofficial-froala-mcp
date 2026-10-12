@@ -305,7 +305,7 @@ Then repeat once in Claude Code with `npx -y @froala/mcp`.
 - `"mcpName": "com.froala/mcp"`, which the official registry checks;
 - `"bin": { "froala-mcp": "dist/stdio.js" }`;
 - `files` set to `dist` and `data` only;
-- `"license": "MIT"`;
+- `"license": "SEE LICENSE IN LICENSE"` (the server is under the Froala license terms, not MIT);
 - `"engines": { "node": ">=20" }`.
 
 **`server.json`** lists both ways to connect:

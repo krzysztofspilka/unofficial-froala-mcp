@@ -242,7 +242,7 @@ Example `froala_validate_config` result:
 ## 7. Decisions needed
 
 1. **Who builds the hosted search:** ourselves or Kapa? And no login (Handsontable) or sign-in (CKEditor)? Recommendation: no login, rate limited.
-2. **Package name and repo:** `@froala/mcp` under the `froala` GitHub org, open source (MIT), like all four leaders.
+2. **Package name and repo:** `@froala/mcp` under the `froala` GitHub org, open source (MIT), like all four leaders. (Decided later: the server is under the Froala license terms, not MIT.)
 3. **One CLI or a separate MCP package.** Ant's single CLI (`antd mcp`, `antd doctor`, `antd setup`) is the strongest pattern. Recommendation: one package, `@froala/cli`, with an `mcp` command, if the team can carry it.
 4. **Whether to gate anything behind the licence key** (as MUI does with code generation). Recommendation: no gating in 1.0; agents need to work during the trial.
 

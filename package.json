@@ -27,7 +27,7 @@
     "prepublishOnly": "npm run check:data && npm run typecheck && npm test && npm run build",
     "check:data": "node scripts/check-data.mjs"
   },
-  "license": "MIT",
+  "license": "SEE LICENSE IN LICENSE",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/froala/froala-mcp.git"

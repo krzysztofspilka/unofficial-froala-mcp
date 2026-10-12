@@ -10,9 +10,10 @@ This is an early release. Please report any issues to support@froala.com. Thank 
 [![Install in VS Code](https://img.shields.io/badge/VS_Code-Install_Server-0098FF?style=for-the-badge&logo=visualstudiocode&logoColor=white)](https://insiders.vscode.dev/redirect/mcp/install?name=froala&config=%7B%22type%22%3A%22http%22%2C%22url%22%3A%22https%3A%2F%2Fmcp.froala.com%2Fmcp%22%7D)
 [![Install in VS Code Insiders](https://img.shields.io/badge/VS_Code_Insiders-Install_Server-24bfa5?style=for-the-badge&logo=visualstudiocode&logoColor=white)](https://insiders.vscode.dev/redirect/mcp/install?name=froala&config=%7B%22type%22%3A%22http%22%2C%22url%22%3A%22https%3A%2F%2Fmcp.froala.com%2Fmcp%22%7D&quality=insiders)
 [![Add to Claude](https://img.shields.io/badge/Claude-Add_connector-D97757?style=for-the-badge&logo=anthropic&logoColor=white)](https://claude.ai/customize/connectors?modal=add-custom-connector&connectorName=Froala&connectorUrl=https%3A%2F%2Fmcp.froala.com%2Fmcp)
-[![npm version](https://img.shields.io/npm/v/@froala/mcp?style=for-the-badge)](https://www.npmjs.com/package/@froala/mcp)
-[![License MIT](https://img.shields.io/badge/license-MIT-blue?style=for-the-badge)](LICENSE)
 [![MCP server](https://img.shields.io/badge/MCP-server-5865F2?style=for-the-badge&logo=modelcontextprotocol&logoColor=white)](https://modelcontextprotocol.io)
+
+> [!TIP]
+> The hosted server is available at **`https://mcp.froala.com/mcp`**. Add this URL to any AI tool that supports remote MCP servers, or use one of the buttons above.
 
 ## How it works
 
@@ -28,7 +29,7 @@ The assistant sends the project's `package.json` and receives setup code that ma
 
 ## Connect your AI tool
 
-The hosted server is available at `https://mcp.froala.com/mcp`.
+Each AI tool connects to the hosted server in its own way.
 
 | AI tool | How to connect |
 |---|---|
@@ -131,4 +132,4 @@ To remove a tool, for example the workarounds once a Froala release resolves the
 
 Please report bugs to support@froala.com, and security issues as described in [SECURITY.md](SECURITY.md).
 
-This server is released under the MIT license (see [LICENSE](LICENSE)). The Froala editor itself is subject to its own [license terms](https://froala.com/wysiwyg-editor/terms/).
+The Froala MCP server, like the Froala editor, is subject to the Froala [license terms](https://froala.com/wysiwyg-editor/terms/). See [LICENSE](LICENSE).
