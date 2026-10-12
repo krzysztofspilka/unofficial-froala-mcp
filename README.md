@@ -68,12 +68,6 @@ To run the server on your own machine instead of using the hosted server, use th
 - The hosted server records the tool name, the HTTP status, the response time, the country and the client name. It never records the code or questions that you send.
 - The local version applies the same limits to input and answers, without the rate limit or any logging.
 
-## Troubleshooting
-
-- **The assistant does not use the Froala tools.** Confirm that your AI tool shows the Froala server as connected, with 8 tools available. If it does, mention the server in your request, for example "Add a Froala editor to this page using the Froala MCP server".
-- **Requests fail with HTTP 429.** The limit of 120 tool calls per minute has been reached. Wait one minute before trying again. To reduce the number of calls, look up several items in one `froala_lookup` call by using its `names` input.
-- **Checking the server version.** The `https://mcp.froala.com/health` endpoint returns the server version and the Froala release that its data covers.
-
 ## Run your own copy
 
 Use the **Deploy to Cloudflare** button above, or deploy the server manually.
