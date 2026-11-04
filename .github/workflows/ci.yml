@@ -5,6 +5,9 @@ on:
     branches: [main]
   pull_request:
 
+permissions:
+  contents: read
+
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -12,10 +15,37 @@ jobs:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v5
         with:
-          node-version: 22
+          node-version: 24
           cache: npm
       - run: npm ci
+      - run: npm run lint
       - run: npm run typecheck
-      - run: npm test
+      - run: npm run check:data
+      - run: npm run test:coverage
       - run: npm run build
+      - run: npm run smoke
+      - run: npm run test:eval
+      - run: npx playwright-core install --with-deps chromium
+      - run: npm run test:browser
+        env:
+          CHROME_CHANNEL: chromium
+
+  # The published bundle has to run on every Node version package.json promises.
+  node-versions:
+    needs: test
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node: [20, 22]
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - uses: actions/setup-node@v5
+        with:
+          node-version: ${{ matrix.node }}
       - run: npm run smoke

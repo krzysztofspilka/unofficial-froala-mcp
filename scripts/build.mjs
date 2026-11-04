@@ -1,4 +1,4 @@
-// Bundles the local version (npx @froala/mcp) into one file: dist/stdio.js.
+// Bundles the local version (npx @froala/mcp) into one file, dist/stdio.js.
 import { build } from 'esbuild';
 import { chmodSync } from 'node:fs';
 

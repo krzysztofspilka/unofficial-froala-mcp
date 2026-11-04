@@ -1,7 +1,7 @@
 {
  "froalaVersion": "5.5.0",
- "generatedAt": "2026-10-12T11:50:20.182Z",
- "docsBuiltAt": "2026-10-12T10:41:12.672Z",
+ "generatedAt": "2026-11-04T13:06:39.695Z",
+ "docsBuiltAt": "2026-11-04T11:46:58.725Z",
  "editorMembers": [
   "$box",
   "$el",
@@ -11646,7 +11646,13 @@
     "removeCodeSnippet",
     "submitCodeSnippetPopup"
    ],
-   "helperLibraries": []
+   "helperLibraries": [
+    {
+     "package": "prismjs",
+     "global": "Prism",
+     "note": "Expose it as window.Prism before the editor starts."
+    }
+   ]
   },
   "codeView": {
    "file": "froala-editor/js/plugins/code_view.min.js",
@@ -13247,6 +13253,11 @@
    "description": "Triggered before AI-generated content is inserted into the editor. **Note:** Returning `false` in the handler assigned to the event will cancel the current action."
   },
   {
+   "name": "aiAssist.chatAfterApply",
+   "args": "",
+   "description": "Fires after a chat response's content has already been applied into the document. This is an informational event and cannot be canceled."
+  },
+  {
    "name": "aiAssist.chatBeforeApply",
    "args": "content",
    "description": "Fires before a chat response's content is applied into the document. This event is cancelable: return `false` from a listener to stop the content from being inserted."
@@ -13265,6 +13276,11 @@
    "name": "aiAssist.improveWritingResponse",
    "args": "answer",
    "description": "Fires when the AI response for an Improve Writing request is received. This is an informational event that fires after the response arrives, so it cannot be canceled."
+  },
+  {
+   "name": "aiAssist.improveWritingStarted",
+   "args": "",
+   "description": "Fires when an Improve Writing request is sent to the AI backend. As documented, this event does not pass any arguments to the callback."
   },
   {
    "name": "aiAssist.reviewEnded",
@@ -13722,9 +13738,19 @@
    "description": "Fires after `getMarkdown()` has already retrieved the markdown content. This is an informational event that fires after the read is complete, so it cannot be canceled."
   },
   {
+   "name": "markdown.beforeGet",
+   "args": "",
+   "description": "Fires before `getMarkdown()` reads the editor's content, before the markdown string is generated. This event is cancelable: if a listener returns `false`, `getMarkdown()` returns `false` instead of the markdown string."
+  },
+  {
    "name": "markdown.beforeSet",
    "args": "markdown",
    "description": "Fires before `setMarkdown()` applies new content to the editor, before the content is actually set. This event is cancelable: returning `false` from a listener stops the set, and `setMarkdown()` then returns `false` with the editor's content left unchanged."
+  },
+  {
+   "name": "markdown.set",
+   "args": "",
+   "description": "Fires after `setMarkdown()` has successfully applied the new content to the editor. This event does not fire if `markdown.beforeSet` canceled the operation, and it cannot be canceled itself."
   },
   {
    "name": "mousedown",
@@ -13765,6 +13791,21 @@
    "name": "paste.wordPaste",
    "args": "clipboard_html",
    "description": "Triggered after the content is pasted from the MS Office into the Froala Rich Text Editor."
+  },
+  {
+   "name": "popups.hide.[id]",
+   "args": "",
+   "description": "Triggered when a popup is hidden. [id] should be replaced with the id of the popup."
+  },
+  {
+   "name": "popups.show.[id]",
+   "args": "",
+   "description": "Triggered when a popup is shown. [id] should be replaced with the id of the popup."
+  },
+  {
+   "name": "popups.show.[id]",
+   "args": "",
+   "description": "Triggered when a popup is shown. [id] should be replaced with the id of the popup."
   },
   {
    "name": "position.refresh",

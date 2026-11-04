@@ -1,9 +1,9 @@
-// The first result for common questions, and honest answers for topics the docs don't cover.
-// If a docs rebuild breaks one of these, look at weight() and NOT_IN_DOCS in src/tools/docs.ts.
+// The first result for common questions, and the right tool for topics the docs cover only in part.
+// If a docs rebuild breaks one of these, look at weight() and OTHER_SOURCES in src/docs/search.ts.
 import { expect, test } from 'vitest';
-import { searchDocs } from '../src/tools/docs.js';
+import { searchDocs } from '../src/docs/search.js';
 
-const search = (query: string) => searchDocs({ query }).structuredContent as { results: { url: string }[]; hints: string[]; partial: boolean };
+const search = (query: string) => searchDocs({ query, limit: 5, offset: 0, format: 'markdown' }).structuredContent as { results: { url: string }[]; hints: string[]; partial: boolean };
 
 test.each([
   ['table plugin', 'docs/plugins/table-plugin/'],
@@ -22,13 +22,20 @@ test.each([
   ['license key', 'docs/activation/'],
   ['html.get method', 'docs/methods/#html.get']
 ])('"%s" finds %s in the first two', (query, expected) => {
-  expect(search(query).results.slice(0, 2).map((r) => r.url).join(' ')).toContain(expected);
+  expect(
+    search(query)
+      .results.slice(0, 2)
+      .map((r) => r.url)
+      .join(' ')
+  ).toContain(expected);
 });
 
 test.each([
-  ['Next.js setup', 'no Next.js guide'],
-  ['nuxt module', 'no Nuxt guide'],
-  ['React Vite 8 blank page', 'froala_workarounds']
+  ['Next.js setup', 'target "nextjs"'],
+  ['nuxt module', 'target "nuxt"'],
+  ['svelte editor', 'target "svelte"'],
+  ['tailwind reset', 'froala_get_integration'],
+  ['React Vite 8 blank page', 'froala_audit_code']
 ])('"%s" points to the right tool', (query, hint) => {
   expect(search(query).hints.join(' ')).toContain(hint);
 });

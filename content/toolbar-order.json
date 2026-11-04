@@ -1,0 +1,36 @@
+{
+  "order": [
+    ["undo", "redo", "print"],
+    ["zoom"],
+    ["paragraphFormat"],
+    ["fontFamily"],
+    ["fontSizeDown", "fontSize", "fontSizeUp"],
+    ["bold", "italic", "underline", "strikeThrough", "subscript", "superscript", "textColor", "backgroundColor", "inlineClass", "inlineStyle", "paragraphStyle"],
+    [
+      "insertLink",
+      "collabAddComment",
+      "insertImage",
+      "insertTable",
+      "insertVideo",
+      "embedly",
+      "insertFiles",
+      "insertFile",
+      "openFilePicker",
+      "codeSnippet",
+      "insertHR",
+      "pageBreak",
+      "insertAnchor",
+      "insertToc",
+      "insertFootnote",
+      "insertSignature"
+    ],
+    ["emoticons", "specialCharacters", "fontAwesome"],
+    ["insertTemplate", "mergeField"],
+    ["align", "alignLeft", "alignCenter", "alignRight", "alignJustify", "lineHeight", "spacing", "todoList", "formatUL", "formatOL", "formatOLSimple", "outdent", "indent", "quote", "clearFormatting"],
+    ["aiAssist", "aiImproveWriting", "aiChangeTone", "aiTranslateTo", "aiShortCuts", "aiChatAssistant", "aiAcceptAll", "aiRejectAll"],
+    ["collabMode", "trackChanges", "collabPanel", "versionControl", "collabPresence", "autoSaveStatus"],
+    ["findReplaceButton", "spellChecker", "import_from_word", "export_to_word", "getPDF"],
+    ["html", "markdown", "showBlocks", "fullscreen", "selectAll", "help"]
+  ],
+  "phone": ["history", "history", "moreText", "moreText", "moreText", "moreText", "moreRich", "moreRich", "moreRich", "moreParagraph", "moreMisc", "moreMisc", "moreMisc", "moreMisc"]
+}

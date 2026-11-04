@@ -1,26 +1,37 @@
-# Evaluation scripts
+# Evaluation
 
-How we checked that the MCP helps AI agents, and that its setup code works. The results are in [docs/EVALUATION.md](../docs/EVALUATION.md).
+These scripts check the server the way people use it. The latest results are in [docs/EVALUATION.md](../docs/EVALUATION.md).
 
-## Check the setup code in fresh apps
+## Fresh apps
 
-`try-setup.mjs` writes the exact output of `froala_get_setup` into a fresh starter app, installs what it says, and adds only the line that shows the editor. Then you build and open the app.
+`run-apps.mjs` creates a fresh app for every target with its official starter, sends the app's package.json to `froala_get_setup`, installs what it says, writes its files unchanged, and adds only the line that shows the editor. Then it audits the files, builds the app, serves it on localhost, and checks it in Chrome.
 
 ```bash
-npm run build                      # build dist/stdio.js first
-npm create vite@latest react-app -- --template react-ts && (cd react-app && npm install)
-node eval/try-setup.mjs react react-app
-cd react-app && npm run build && npx vite preview
+npm run build
+npm run test:apps -- ../froala-apps
 ```
 
-Frameworks: `react`, `vue`, `angular`, `nextjs`, `nuxt`, `svelte` and `vanilla`. In the browser, check that the editor appears and that bold, lists and the table picker work. Use localhost: without a key, other host names block most toolbar buttons.
+Add app names after the folder to run some of them, for example `npm run test:apps -- ../froala-apps react-ts nuxt`. The names are `react-ts`, `react-js`, `react-dev`, `vue-ts`, `vue-js`, `typescript`, `javascript`, `html-page`, `angular`, `angular-ssr`, `nextjs`, `nuxt` and `svelte`.
 
-The starters we used are listed in [docs/EVALUATION.md](../docs/EVALUATION.md). Angular CLI 22 needs Node 22.22.3, 24.15 or newer.
+The script writes `results.json` and one screenshot for each app.
 
-## Compare agents with and without the MCP
+## Questions
 
-1. Create each starter once and copy it twice, one copy per agent.
-2. Run the MCP server with `npm run dev`. Agents that can't connect to MCP servers can call it with `FROALA_MCP_URL=http://localhost:8787/mcp node scripts/call.mjs <tool> name=value`. Set `FROALA_MCP_LOG` to a file to record each call.
-3. Give both agents the same task, and give one of them the MCP. Record tokens, tool calls and time.
-4. Summarise the transcripts with `python3 eval/analyze-transcripts.py <folder with the agents' .output files>`. Edit the agent ids at the top of the script first.
-5. Rebuild every app yourself and open it in a browser on localhost.
+`questions.xml` holds ten questions in the mcp-builder evaluation format. `run-questions.mjs` checks that each answer is in the tool answer named by its check.
+
+```bash
+npm run build
+npm run test:eval
+```
+
+To measure a model, give it the questions and the tools, without the answers, and compare what it returns.
+
+## Call a tool by hand
+
+`scripts/call.mjs` calls one tool from the command line, which also suits agents that can run shell commands and cannot connect to MCP servers.
+
+```bash
+node scripts/call.mjs froala_get_setup target=react package_json=@package.json
+```
+
+Set `FROALA_MCP_URL` to call a running server, and `FROALA_MCP_LOG` to a file to record each call.

@@ -1,21 +1,24 @@
-// Builds data/docs.json from the Froala docs and examples pages on froala.com.
+// Builds docs.json from the Froala docs and examples pages on froala.com.
 // It reads the sitemap, downloads each page politely (2 at a time, 500 ms apart),
-// keeps the <main> content and converts it to Markdown.
+// keeps the <main> content and converts it to Markdown. When FROALA_SITE_DIR names the
+// froala.com site repository, its pages replace the downloaded copy.
 // The script stops with an error if a required page is missing or too many pages fail,
-// so an incomplete set of docs never replaces the last good one.
-import { writeFileSync, renameSync, mkdirSync } from 'node:fs';
+// so an incomplete set of docs is never written. npm run build:data runs it in a staging folder.
+import { mkdirSync, readFileSync, readdirSync, renameSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import * as cheerio from 'cheerio';
 import TurndownService from 'turndown';
 
 const root = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
-const USER_AGENT = 'froala-mcp-indexer (+https://github.com/froala/froala-mcp)';
+const USER_AGENT = 'froala-mcp-indexer';
 const SITEMAP_INDEX = 'https://froala.com/sitemap_index.xml';
 const KEEP = /^https:\/\/froala\.com\/wysiwyg-editor\/(docs|examples)\//;
 const CONCURRENCY = 2;
 const DELAY_MS = 500;
 const MAX_FAILED_SHARE = 0.02;
+// The tools read the fields of these three pages, and the site repository writes them in another format.
+const KEEP_DOWNLOADED = /\/docs\/(options|events|methods)\/$/;
 // Pages the tools rely on. The build fails without them.
 export const REQUIRED_PAGES = [
   'https://froala.com/wysiwyg-editor/docs/overview/',
@@ -57,11 +60,9 @@ function sectionOf(url) {
 export function toPage(url, html) {
   const $ = cheerio.load(html);
   const main = $('main').first().length ? $('main').first() : $('body');
-  // Page chrome: the docs menu (left column), the table of contents (right column), menus and breadcrumbs.
-  main
-    .find('nav, header, footer, aside, .sticky-column, .lwptoc, .jupiterx-widget, .elementor-widget-nav-menu, .elementor-widget-breadcrumbs, .elementor-widget-table-of-contents')
-    .remove();
-  // Code samples: keep them as fenced blocks.
+  // Removes the page chrome, which is the docs menu, the table of contents, other menus and the breadcrumbs.
+  main.find('nav, header, footer, aside, .sticky-column, .lwptoc, .jupiterx-widget, .elementor-widget-nav-menu, .elementor-widget-breadcrumbs, .elementor-widget-table-of-contents').remove();
+  // Keeps code samples as fenced blocks.
   main.find('pre').each((_, el) => {
     const text = $(el).text();
     $(el).replaceWith(`<pre><code>${cheerio.load('<x></x>')('x').text(text).html()}</code></pre>`);
@@ -105,6 +106,59 @@ export function cleanMarkdown(markdown, url) {
 /** Pages whose code uses Froala 2 event handlers, function (e, editor), are marked so the tools can warn. */
 export const pageFlags = (markdown) => (/function\s*\(\s*e\s*,\s*editor\b/.test(markdown) ? { legacyCode: true } : {});
 
+// Sentences in the docs that describe releases before the current one, and what replaces them.
+const CURRENT_FACTS = [
+  [/^> ?Plugins are fully functional during your trial once you've added your trial key to the setup\.\n\n?/gm, ''],
+  [/^Plugins are fully functional during your trial once you've added your trial key to the setup\.\n\n?/gm, ''],
+  [/With your trial key in the setup, every plugin works for the whole trial\./g, 'Every plugin works with any key.'],
+  [/Without a valid key, Froala shows an unlicensed banner\./g, 'Without a valid key, Froala shows a small notice, and every feature keeps working.'],
+  [/^.*\/\/ In a Vite 8 app, add legacy: \{ inconsistentCjsInterop: true \}.*\n/gm, ''],
+  [/In a Vite 8 app, set one option in vite\.config\.ts first, or the page stays blank\.\s*/g, ''],
+  [/^## Configure Vite\n[\s\S]*?(?=^## )/gm, '']
+];
+
+/** The licensing and Vite behaviour of the current release, which every page must state. */
+export function withCurrentFacts(pages) {
+  const notice = readFileSync(path.join(root, 'content/licensing.md'), 'utf8');
+  const section = notice.slice(notice.indexOf('## What the editor shows'), notice.indexOf('## When you are ready to ship')).trim();
+  return pages.map((page) => {
+    const current = CURRENT_FACTS.reduce((text, [from, to]) => text.replace(from, to), page.markdown);
+    return { ...page, markdown: page.url.endsWith('/docs/activation/') ? current.replace(/## Without a Key[\s\S]*?(?=\n## |$)/, `${section}\n`) : current };
+  });
+}
+
+/** True when the share of pages that gave no content is too high to trust the result. */
+export const tooManyLost = (failed, skipped, total) => failed + skipped > total * MAX_FAILED_SHARE;
+
+/** Every index.md under the site repository's site folder, with its froala.com URL. */
+function sitePages(folder, prefix = '') {
+  const pages = [];
+  for (const entry of readdirSync(folder, { withFileTypes: true })) {
+    if (entry.isDirectory()) pages.push(...sitePages(path.join(folder, entry.name), `${prefix}${entry.name}/`));
+    else if (entry.name === 'index.md') pages.push({ url: `https://froala.com/${prefix}`, file: path.join(folder, entry.name) });
+  }
+  return pages;
+}
+
+/** Replaces downloaded pages with the site repository's Markdown, and adds the pages only it has. */
+async function overlaySitePages(pages) {
+  if (!process.env.FROALA_SITE_DIR) return pages;
+  const site = path.resolve(root, process.env.FROALA_SITE_DIR, 'site');
+  const byUrl = new Map(pages.map((page) => [page.url, page]));
+  for (const { url, file } of sitePages(site)) {
+    if (KEEP_DOWNLOADED.test(url) || !url.startsWith('https://froala.com/wysiwyg-editor/')) continue;
+    const markdown = cleanMarkdown(readFileSync(file, 'utf8'), url);
+    if (markdown.length <= 50) continue;
+    const headings = [...markdown.matchAll(/^#{2,3} (.+)$/gm)].map((m) => m[1].replace(/[`*]/g, '').trim()).slice(0, 80);
+    const title = markdown.match(/^# (.+)$/m)?.[1].trim() ?? url;
+    const known = byUrl.get(url);
+    // A page the live site does not have stays out of links.
+    const published = known ? true : (await fetch(url, { method: 'HEAD', headers: { 'User-Agent': USER_AGENT } })).ok;
+    byUrl.set(url, { url, title, section: sectionOf(url), headings, markdown, ...pageFlags(markdown), ...(published ? {} : { published: false }) });
+  }
+  return [...byUrl.values()];
+}
+
 async function main() {
   const index = await get(SITEMAP_INDEX);
   const urls = [];
@@ -139,16 +193,18 @@ async function main() {
   if (skipped.length) console.log(`${skipped.length} page(s) had no content and were skipped:\n${skipped.join('\n')}`);
   const missing = REQUIRED_PAGES.filter((url) => !pages.some((p) => p.url === url));
   if (missing.length) throw new Error(`Required pages are missing, so docs.json was not written:\n${missing.join('\n')}`);
-  if (failed.length > unique.length * MAX_FAILED_SHARE) throw new Error(`${failed.length} of ${unique.length} pages failed, so docs.json was not written.`);
+  if (tooManyLost(failed.length, skipped.length, unique.length)) throw new Error(`${failed.length + skipped.length} of ${unique.length} pages gave no content, so docs.json was not written.`);
 
-  pages.sort((a, b) => a.url.localeCompare(b.url));
-  mkdirSync(path.join(root, 'data'), { recursive: true });
-  const out = { builtAt: new Date().toISOString(), source: SITEMAP_INDEX, pages };
+  const merged = withCurrentFacts(await overlaySitePages(pages));
+  merged.sort((a, b) => a.url.localeCompare(b.url));
+  const folder = path.resolve(root, process.env.DATA_DIR ?? 'data');
+  mkdirSync(folder, { recursive: true });
+  const out = { builtAt: new Date().toISOString(), source: SITEMAP_INDEX, pages: merged };
   // Write to a temporary file first, so a failed run never leaves a half-written file behind.
-  const target = path.join(root, 'data/docs.json');
+  const target = path.join(folder, 'docs.json');
   writeFileSync(`${target}.tmp`, JSON.stringify(out));
   renameSync(`${target}.tmp`, target);
-  console.log(`Saved ${pages.length} pages (${Math.round(JSON.stringify(out).length / 1024)} KB)`);
+  console.log(`Saved ${merged.length} pages (${Math.round(JSON.stringify(out).length / 1024)} KB)`);
 }
 
 if (process.argv[1] && fileURLToPath(import.meta.url) === path.resolve(process.argv[1])) await main();

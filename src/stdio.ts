@@ -1,4 +1,4 @@
-// Local version: your AI tool starts this with `npx -y @froala/mcp` and talks to it over stdin and stdout.
+// The local version. An AI tool starts it with `npx -y @froala/mcp` and talks to it over stdin and stdout.
 import { serveStdio } from '@modelcontextprotocol/server/stdio';
 import { createFroalaServer, VERSION } from './server.js';
 import { FROALA_VERSION } from './data.js';

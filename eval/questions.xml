@@ -1,0 +1,55 @@
+<!-- Ten questions an AI agent should answer with this server's tools alone. The format is the mcp-builder
+     evaluation format. Each answer is one stable value. Every "check" is a tool call whose text answer contains
+     the answer, which npm run test:eval verifies without a model. -->
+<evaluation>
+  <qa_pair>
+    <question>A project uses the Froala insertTable toolbar button. Which single plugin file must it import from the froala-editor package?</question>
+    <answer>froala-editor/js/plugins/table.min.js</answer>
+    <check tool="froala_query_docs" args='{"mode":"lookup","kind":"button","names":["insertTable"]}'/>
+  </qa_pair>
+  <qa_pair>
+    <question>Which npm package does the Froala codeSnippet plugin need before its window will open?</question>
+    <answer>prismjs</answer>
+    <check tool="froala_query_docs" args='{"mode":"lookup","kind":"plugin","names":["codeSnippet"]}'/>
+  </qa_pair>
+  <qa_pair>
+    <question>What is the id of the ready-made Froala preset for support replies with the toolbar under the text?</question>
+    <answer>help-desk</answer>
+    <check tool="froala_find_presets" args='{"query":"support replies toolbar under the text","kind":"preset"}'/>
+  </qa_pair>
+  <qa_pair>
+    <question>With the Froala collaborative plugin, one undo right after load removes the whole document. What is the id of this known issue?</question>
+    <answer>collaboration-undo</answer>
+    <check tool="froala_audit_code" args='{"symptom":"one undo after load empties the document"}'/>
+  </qa_pair>
+  <qa_pair>
+    <question>In the froala-enhancements file, which enhancement stops pasted HTML from running its event handlers?</question>
+    <answer>safePaste</answer>
+    <check tool="froala_audit_code" args='{"issue":"pasted-html-handlers"}'/>
+  </qa_pair>
+  <qa_pair>
+    <question>In a new Nuxt project, in which file does the Froala setup register the Vue wrapper, when the project uses TypeScript?</question>
+    <answer>app/plugins/froala.client.ts</answer>
+    <check tool="froala_get_setup" args='{"target":"nuxt"}'/>
+  </qa_pair>
+  <qa_pair>
+    <question>Which CSS value does the Froala Tailwind guide use to bring back list bullets and heading sizes inside .fr-view?</question>
+    <answer>revert</answer>
+    <check tool="froala_get_integration" args='{"name":"tailwind"}'/>
+  </qa_pair>
+  <qa_pair>
+    <question>Which option key must an Angular project add to angular.json so that ng build stops warning about Froala being CommonJS?</question>
+    <answer>allowedCommonJsDependencies</answer>
+    <check tool="froala_get_setup" args='{"target":"angular"}'/>
+  </qa_pair>
+  <qa_pair>
+    <question>What is the default value of the Froala option lineBreakerOffset in the package?</question>
+    <answer>15</answer>
+    <check tool="froala_query_docs" args='{"mode":"lookup","kind":"option","names":["lineBreakerOffset"]}'/>
+  </qa_pair>
+  <qa_pair>
+    <question>Which Froala sample shows how to add mentions with the Tribute.js library? Give its sample id.</question>
+    <answer>example:tribute-js</answer>
+    <check tool="froala_find_presets" args='{"query":"mentions tribute"}'/>
+  </qa_pair>
+</evaluation>

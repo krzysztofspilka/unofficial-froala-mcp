@@ -2,27 +2,17 @@
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
   "name": "com.froala/mcp",
   "title": "Froala",
-  "description": "Set up the Froala WYSIWYG editor, check Froala code and search the Froala docs.",
+  "description": "Set up the Froala rich text editor, find presets, audit Froala code and read the Froala docs.",
   "websiteUrl": "https://froala.com/wysiwyg-editor/",
-  "repository": {
-    "url": "https://github.com/froala/froala-mcp",
-    "source": "github"
-  },
-  "version": "0.1.0",
+  "version": "0.2.0",
   "packages": [
     {
       "registryType": "npm",
       "identifier": "@froala/mcp",
-      "version": "0.1.0",
+      "version": "0.2.0",
       "transport": {
         "type": "stdio"
       }
-    }
-  ],
-  "remotes": [
-    {
-      "type": "streamable-http",
-      "url": "https://mcp.froala.com/mcp"
     }
   ]
 }

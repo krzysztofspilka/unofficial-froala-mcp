@@ -1,8 +1,8 @@
-// Builds data/metadata.json from the installed froala-editor package and data/docs.json.
-// From the package: it loads the editor core in jsdom, then each plugin file one at a time, and records
+// Builds metadata.json from the installed froala-editor package and docs.json.
+// It loads the editor core from the package in jsdom, then each plugin file one at a time, and records
 // which options (FroalaEditor.DEFAULTS), plugins and toolbar commands each file adds, which plugins
 // plugins.pkgd.min.js contains, and the option types declared in index.d.ts.
-// From the docs (run npm run build:docs first): option descriptions and types, events and methods.
+// It reads option descriptions and types, events and methods from docs.json.
 // The script stops with an error if a plugin file fails to load, so incomplete data is never written.
 import { readFileSync, readdirSync, writeFileSync, renameSync, existsSync, mkdirSync } from 'node:fs';
 import { createRequire } from 'node:module';
@@ -22,6 +22,7 @@ const HELPER_LIBRARIES = {
     { package: 'html-docx-js', global: 'htmlDocx', note: 'Expose it as window.htmlDocx.' },
     { package: 'file-saver', global: 'saveAs', note: 'Expose saveAs as window.saveAs.' }
   ],
+  codeSnippet: [{ package: 'prismjs', global: 'Prism', note: 'Expose it as window.Prism before the editor starts.' }],
   codeView: [{ package: 'codemirror', global: 'CodeMirror', note: 'Optional. Without it, code view uses a plain textarea.', optional: true }],
   print: [{ package: 'html2pdf.js', global: 'html2pdf', note: 'Needed only for the getPDF (export to PDF) button.', onlyFor: ['getPDF'] }],
   filestack: [{ package: 'filestack-js', global: 'filestack', note: 'Expose it as window.filestack and set filestackOptions.filestackAPI.' }],
@@ -74,7 +75,10 @@ const pluginFiles = [];
 for (const folder of ['js/plugins', 'js/third_party']) {
   const dir = path.join(froalaDir, folder);
   if (!existsSync(dir)) continue;
-  for (const file of readdirSync(dir).filter((f) => f.endsWith('.min.js')).sort()) pluginFiles.push(`${folder}/${file}`);
+  for (const file of readdirSync(dir)
+    .filter((f) => f.endsWith('.min.js'))
+    .sort())
+    pluginFiles.push(`${folder}/${file}`);
 }
 // files_manager also defines image, video and file options; load it last so those options belong to their own plugins.
 pluginFiles.sort((a, b) => Number(a.endsWith('files_manager.min.js')) - Number(b.endsWith('files_manager.min.js')));
@@ -82,7 +86,11 @@ pluginFiles.sort((a, b) => Number(a.endsWith('files_manager.min.js')) - Number(b
 const editorCss = read('css/froala_editor.pkgd.min.css');
 /** The share of a stylesheet's rules that also appear in another stylesheet. */
 function shareOfRulesIn(css, other) {
-  const rules = css.replace(/\/\*[\s\S]*?\*\//g, '').split('}').map((r) => r.trim()).filter((r) => r.length > 10);
+  const rules = css
+    .replace(/\/\*[\s\S]*?\*\//g, '')
+    .split('}')
+    .map((r) => r.trim())
+    .filter((r) => r.length > 10);
   return rules.length ? rules.filter((r) => other.includes(r)).length / rules.length : 1;
 }
 for (const rel of pluginFiles) {
@@ -92,7 +100,7 @@ for (const rel of pluginFiles) {
   try {
     window.eval(read(rel));
   } catch (error) {
-    throw new Error(`${rel} failed to load, so metadata.json was not written: ${error.message}`);
+    throw new Error(`${rel} failed to load, so metadata.json was not written: ${error.message}`, { cause: error });
   }
   const newPlugins = Object.keys(FE.PLUGINS).filter((p) => !beforePlugins.has(p));
   const newOptions = Object.keys(FE.DEFAULTS).filter((o) => !beforeOptions.has(o));
@@ -147,11 +155,12 @@ for (const m of optionsInterface.matchAll(/^\s*(\w+)\??\s*:\s*([^;]+);/gm)) {
 
 // ---------- Descriptions, types, events and methods from the docs ----------
 
-const docsFile = path.join(root, 'data/docs.json');
+const folder = path.resolve(root, process.env.DATA_DIR ?? 'data');
+const docsFile = path.join(folder, 'docs.json');
 const docsPages = existsSync(docsFile) ? JSON.parse(readFileSync(docsFile, 'utf8')).pages : [];
 const docsPage = (suffix) => docsPages.find((p) => p.url.endsWith(suffix));
 
-/** Splits a reference page into its ### sections: { heading, body }. */
+/** Splits a reference page into its ### sections, each with a heading and a body. */
 function sections(page) {
   if (!page) return [];
   return [...page.markdown.matchAll(/^### (.+)\n([\s\S]*?)(?=^#{2,3} |(?![\s\S]))/gm)].map((m) => ({ heading: m[1].trim(), body: m[2] }));
@@ -159,10 +168,14 @@ function sections(page) {
 const unescape = (text) => text.replace(/\\([_[\]*])/g, '$1');
 /** The first plain paragraph of a section, after the Type, Default, Plugin and Returns fields. */
 function firstParagraph(body) {
-  const paragraphs = body.replace(/```[\s\S]*?```/g, '\n\n[code]\n\n').split(/\n\s*\n/).map((p) => p.trim());
+  const paragraphs = body
+    .replace(/```[\s\S]*?```/g, '\n\n[code]\n\n')
+    .split(/\n\s*\n/)
+    .map((p) => p.trim());
   for (let i = 0; i < paragraphs.length; i++) {
     const p = paragraphs[i];
-    if (/^(Type|Default|Plugin|Returns):$/.test(p)) i++; // the field's value is the next paragraph
+    if (/^(Type|Default|Plugin|Returns):$/.test(p))
+      i++; // the field's value is the next paragraph
     else if (p && !/^(Type|Default|Plugin|Returns):/.test(p) && !/^[-#[*]/.test(p)) return unescape(p).replace(/\s+/g, ' ');
   }
   return '';
@@ -182,10 +195,11 @@ for (const { heading, body } of sections(docsPage('/docs/options/'))) {
 const callable = (page) =>
   sections(page)
     .map(({ heading, body }) => {
-      const m = unescape(heading).match(/^([\w.]+)\s*\((.*)\)\s*$/);
+      // Some events name a popup in brackets, such as popups.show.[id], and some have no parentheses.
+      const m = unescape(heading).match(/^([\w.]+(?:\.\[\w+\](?:\.[\w.]+)?)?)\s*(?:\((.*)\))?\s*$/);
       if (!m) return null;
       const returns = fieldAfter(body, 'Returns');
-      return { name: m[1], args: m[2].trim(), ...(returns ? { returns } : {}), description: firstParagraph(body) };
+      return { name: m[1], args: (m[2] ?? '').trim(), ...(returns ? { returns } : {}), description: firstParagraph(body) };
     })
     .filter(Boolean);
 const events = callable(docsPage('/docs/events/'));
@@ -208,7 +222,7 @@ const metadata = {
 
 // Write to a temporary file first, so a failed run never leaves a half-written file behind.
 mkdirSync(path.join(root, 'data'), { recursive: true });
-const target = process.env.METADATA_OUT ?? path.join(root, 'data/metadata.json');
+const target = path.join(folder, 'metadata.json');
 writeFileSync(`${target}.tmp`, JSON.stringify(metadata, null, 1));
 renameSync(`${target}.tmp`, target);
 console.log(

@@ -1,11 +1,11 @@
-// Calls the Froala MCP server from the command line. Handy for trying a tool, and for AI agents
-// that can run shell commands but can't connect to MCP servers.
+// Calls the Froala MCP server from the command line. Useful for trying a tool, and for AI agents
+// that can run shell commands but cannot connect to MCP servers.
 //
 //   node scripts/call.mjs tools                      the server instructions and every tool with its inputs
-//   node scripts/call.mjs froala_get_setup framework=react package_json=@package.json
-//   node scripts/call.mjs froala_check_code files=@src/Editor.tsx,@package.json
+//   node scripts/call.mjs froala_get_setup target=react package_json=@package.json
+//   node scripts/call.mjs froala_audit_code files=@src/Editor.tsx,@package.json
 //
-// A value is plain text, JSON (true, 3, ["a"]) or @path to read a file. For froala_check_code,
+// A value is plain text, JSON (true, 3, ["a"]) or @path to read a file. For froala_audit_code,
 // files= takes a comma-separated list of @paths.
 // The server is dist/stdio.js (run npm run build first), or the URL in FROALA_MCP_URL.
 // Set FROALA_MCP_LOG to a file path to record each call there.
@@ -36,16 +36,12 @@ for (const pair of pairs) {
   const name = pair.slice(0, at);
   const value = pair.slice(at + 1);
   args[name] =
-    command === 'froala_check_code' && name === 'files'
-      ? value.split(',').map((path) => ({ path: path.replace(/^@/, ''), content: readFileSync(path.replace(/^@/, ''), 'utf8') }))
-      : readValue(value);
+    command === 'froala_audit_code' && name === 'files' ? value.split(',').map((path) => ({ path: path.replace(/^@/, ''), content: readFileSync(path.replace(/^@/, ''), 'utf8') })) : readValue(value);
 }
 
 const url = process.env.FROALA_MCP_URL;
 const server = join(dirname(fileURLToPath(import.meta.url)), '../dist/stdio.js');
-const transport = url
-  ? new StreamableHTTPClientTransport(new URL(url))
-  : new StdioClientTransport({ command: process.execPath, args: [server], stderr: 'ignore' });
+const transport = url ? new StreamableHTTPClientTransport(new URL(url)) : new StdioClientTransport({ command: process.execPath, args: [server], stderr: 'ignore' });
 const client = new Client({ name: 'froala-mcp-call', version: '1.0.0' });
 await client.connect(transport);
 

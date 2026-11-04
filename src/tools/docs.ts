@@ -1,271 +1,62 @@
 import * as z from 'zod/v4';
 import type { McpServer } from '@modelcontextprotocol/server';
-import MiniSearch from 'minisearch';
-import { docs, SOURCE, type DocPage } from '../data.js';
-import { READ_ONLY, toolError, toolResult } from '../util.js';
+import licensingText from '../../content/licensing.md';
+import { SOURCE } from '../data.js';
+import { KINDS, lookup } from '../docs/lookup.js';
+import { getPage, searchDocs } from '../docs/search.js';
+import { READ_ONLY, pageInputs, responseFormat, toolError, toolResult, type ResponseFormat } from '../util.js';
 
-const searchInput = z.object({
-  query: z.string().min(2).max(200).describe('What to look for, e.g. "image upload to S3"'),
-  limit: z.number().int().min(1).max(10).optional().describe('Number of results, 1 to 10 (default 5)')
+export const docsInput = z.strictObject({
+  mode: z
+    .enum(['search', 'lookup', 'read', 'licensing'])
+    .describe('"search" finds pages by words, "lookup" explains API names, "read" returns a page, and "licensing" explains how to try Froala and where the key goes.'),
+  query: z.string().min(2).max(200).optional().describe('For search, what to look for, such as "image upload to S3". For lookup, part of a name, such as "upload".'),
+  kind: z.enum(KINDS).optional().describe('For lookup, what the names are.'),
+  names: z.array(z.string().min(1).max(100)).min(1).max(30).optional().describe('For lookup, one or more exact names in any letter case, such as every button of a toolbar.'),
+  url: z.string().min(1).max(500).optional().describe('For read, a froala.com docs or examples URL from a search result. An #anchor returns that section.'),
+  part: z.number().int().min(1).optional().describe('For read, which part of a long page to return (default 1).'),
+  ...pageInputs(50, 10),
+  response_format: responseFormat
 });
 
-const pageInput = z.object({
-  url: z.string().min(1).max(500).describe('A froala.com docs or examples URL, usually from froala_search_docs. An #anchor returns that section.'),
-  part: z.number().int().min(1).optional().describe('Which part of a long page to return (default 1)')
-});
-
-export const PART_SIZE = 15_000;
-const REFERENCE_PAGES = /\/docs\/(options|events|methods)\/$/;
-
-/** A search entry: a whole page, or one section of the options, events and methods references. */
-interface Entry {
-  id: string;
-  url: string;
-  title: string;
-  section: string;
-  headings: string[];
-  markdown: string;
-  legacyCode?: boolean;
+/** The text of content/licensing.md. */
+export function licensing(format: ResponseFormat = 'markdown') {
+  const text = licensingText.trim();
+  return toolResult(text, { ...SOURCE, reviewed: '2026-10-12', markdown: text }, format);
 }
 
-/** The ### sections of a reference page, each with its anchor (the option, event or method name). */
-function referenceSections(page: DocPage): Entry[] {
-  const sections = new Map<string, Entry>();
-  for (const m of page.markdown.matchAll(/^### (.+)\n([\s\S]*?)(?=^#{2,3} |(?![\s\S]))/gm)) {
-    const heading = m[1].replace(/\\/g, '').trim();
-    const anchor = heading.match(/^[\w.]+/)?.[0] ?? heading;
-    const id = `${page.url}#${anchor}`;
-    const markdown = `### ${m[1]}\n${m[2]}`.trim();
-    // A name documented twice (for example in two plugins) becomes one entry with both sections.
-    const existing = sections.get(id);
-    if (existing) existing.markdown += `\n\n${markdown}`;
-    else sections.set(id, { id, url: id, title: `${heading} (${page.title})`, section: page.section, headings: [], markdown });
+export function queryDocs({ mode, query, kind, names, url, part, limit = 10, offset = 0, response_format: format = 'markdown' }: z.input<typeof docsInput>) {
+  if (mode === 'licensing') return licensing(format);
+  if (mode === 'search') {
+    if (!query) return toolError('Search mode needs query, for example { mode: "search", query: "image upload" }.');
+    return searchDocs({ query, limit, offset, format });
   }
-  return [...sections.values()];
+  if (mode === 'read') {
+    if (!url) return toolError('Read mode needs url, for example { mode: "read", url: "https://froala.com/wysiwyg-editor/docs/options/#placeholderText" }.');
+    return getPage({ url, part, format });
+  }
+  if (!kind) return toolError('Lookup mode needs kind, for example { mode: "lookup", kind: "button", names: ["bold", "insertTable"] }.');
+  return lookup({ kind, names, query, limit, offset, format });
 }
 
-const entries: Entry[] = docs.flatMap((page) => (REFERENCE_PAGES.test(page.url) ? referenceSections(page) : [{ ...page, id: page.url }]));
-const byUrl = new Map(docs.map((p) => [p.url, p]));
-const byId = new Map(entries.map((e) => [e.id, e]));
-
-// Migration guides and pages for old Angular versions talk about other setups, so they rank lower.
-function weight(entry: Entry): number {
-  if (entry.url.includes('/migration-guides/') || /\/(angular1|angularjs-[\d-]+)\//.test(entry.url)) return 0.5;
-  return entry.legacyCode ? 0.8 : 1;
-}
-
-let index: MiniSearch<Entry> | undefined;
-
-/** Built on first use, then kept for the life of the process. */
-function getIndex(): MiniSearch<Entry> {
-  if (!index) {
-    index = new MiniSearch<Entry>({
-      // "path" is the URL path as words, so /plugins/table-plugin/ matches "table plugin".
-      fields: ['title', 'path', 'headings', 'markdown'],
-      storeFields: ['url', 'title'],
-      extractField: (entry, field) => {
-        if (field === 'path') return entry.url.replace('https://froala.com/wysiwyg-editor/', '').replace(/[/#.-]/g, ' ');
-        const value = entry[field as keyof Entry];
-        return Array.isArray(value) ? value.join(' ') : String(value ?? '');
-      },
-      searchOptions: {
-        boost: { title: 4, path: 3, headings: 2 },
-        boostDocument: (id) => weight(byId.get(id as string)!),
-        prefix: true,
-        fuzzy: 0.15,
-        combineWith: 'AND'
-      }
-    });
-    index.addAll(entries);
-  }
-  return index;
-}
-
-function snippet(entry: Entry, terms: string[]): string {
-  const text = entry.markdown.replace(/```[\s\S]*?```/g, ' ').replace(/[#*_`>[\]]/g, '').replace(/\s+/g, ' ');
-  const lower = text.toLowerCase();
-  let at = -1;
-  for (const term of terms) {
-    at = lower.indexOf(term.toLowerCase());
-    if (at >= 0) break;
-  }
-  const start = Math.max(0, at < 0 ? 0 : at - 120);
-  const piece = text.slice(start, start + 400).trim();
-  return (start > 0 ? '...' : '') + piece + (start + 400 < text.length ? '...' : '');
-}
-
-// Topics the docs don't cover, and where the answer is instead.
-const NOT_IN_DOCS: [RegExp, string][] = [
-  [/next\.?js|nextjs/i, "The docs have no Next.js guide. froala_get_setup with framework \"nextjs\" gives tested setup code."],
-  [/nuxt/i, "The docs have no Nuxt guide. froala_get_setup with framework \"nuxt\" gives tested setup code."],
-  [/svelte/i, "The docs have no Svelte page. froala_get_setup with framework \"svelte\" gives setup code."],
-  [/vite|blank page|white page|not (render|show)/i, 'For a blank page with Vite 8 and other known problems, call froala_workarounds with your package.json.']
-];
-
-export function searchDocs({ query, limit = 5 }: z.infer<typeof searchInput>) {
-  const idx = getIndex();
-  let hits = idx.search(query);
-  let partial = false;
-  if (hits.length === 0) {
-    hits = idx.search(query, { combineWith: 'OR' });
-    partial = hits.length > 0;
-  }
-  const words = query.toLowerCase().split(/\s+/).filter((w) => w.length > 1);
-  const results = hits.slice(0, limit).map((hit) => {
-    const entry = byId.get(hit.id as string)!;
-    const missing = partial ? words.filter((w) => !hit.terms.some((t) => t.startsWith(w.slice(0, Math.max(3, w.length - 2))))) : [];
-    return {
-      title: entry.title,
-      url: entry.url,
-      snippet: snippet(entry, hit.terms),
-      ...(missing.length ? { missing_words: missing } : {}),
-      ...(entry.legacyCode ? { note: 'This page has code written for Froala 2: event handlers there take (e, editor). Since Froala 3 the editor is this.' } : {})
-    };
-  });
-  const hints = NOT_IN_DOCS.filter(([pattern]) => pattern.test(query)).map(([, hint]) => hint);
-  if (results.length === 0) {
-    return toolResult([`No Froala docs or examples match "${query}".`, ...hints].join('\n'), { ...SOURCE, query, partial: false, results: [], hints });
-  }
-  const text = [
-    partial ? `No page has all the words in "${query}". These pages have some of them:\n` : '',
-    results
-      .map((r, i) => `${i + 1}. ${r.title}\n   ${r.url}\n   ${r.snippet}${r.missing_words ? `\n   (doesn't mention: ${r.missing_words.join(', ')})` : ''}${r.note ? `\n   Note: ${r.note}` : ''}`)
-      .join('\n\n'),
-    hints.length ? `\n${hints.join('\n')}` : '',
-    '\nUse froala_get_page with one of these URLs to read it.'
-  ].join('\n').trim();
-  return toolResult(text, { ...SOURCE, query, partial, results, hints });
-}
-
-/** Turns a URL into its docs key and anchor, or explains why it isn't a Froala docs URL. */
-export function parseDocsUrl(url: string): { key: string; anchor?: string } | { error: string } {
-  let u = url.trim();
-  if (u.startsWith('/')) u = `https://froala.com${u}`;
-  if (!/^[a-z]+:\/\//i.test(u)) u = `https://${u}`;
-  let parsed: URL;
-  try {
-    parsed = new URL(u);
-  } catch {
-    return { error: `${url} isn't a valid URL.` };
-  }
-  if (!/^https?:$/.test(parsed.protocol) || !/^(www\.)?froala\.com$/i.test(parsed.hostname)) {
-    return { error: `Only froala.com docs and examples URLs are supported, and ${url} is on ${parsed.hostname || 'another site'}.` };
-  }
-  let pathname = parsed.pathname;
-  if (!pathname.endsWith('/')) pathname += '/';
-  return { key: `https://froala.com${pathname}`, anchor: parsed.hash ? decodeURIComponent(parsed.hash.slice(1)) : undefined };
-}
-
-/**
- * Splits a page into parts of up to PART_SIZE characters. It cuts at a heading or a blank line,
- * never inside a code block, so every part has whole code blocks.
- */
-export function splitParts(markdown: string): string[] {
-  const blocks: string[] = [];
-  let current = '';
-  let inCode = false;
-  for (const line of markdown.split('\n')) {
-    if (line.trim().startsWith('```')) inCode = !inCode;
-    current += `${line}\n`;
-    if (!inCode && line.trim() === '') {
-      blocks.push(current);
-      current = '';
-    }
-  }
-  if (current) blocks.push(current);
-  // A very long paragraph, such as the list of every option, may be cut between lines, and a very long line between words.
-  const cutLine = (line: string): string[] => {
-    const pieces: string[] = [];
-    let rest = line;
-    // Half a part at a time, so the pieces fill parts that already have some text.
-    while (rest.length > PART_SIZE / 2) {
-      const at = rest.lastIndexOf(' ', PART_SIZE / 2);
-      const cut = at > 0 ? at + 1 : PART_SIZE / 2;
-      pieces.push(rest.slice(0, cut));
-      rest = rest.slice(cut);
-    }
-    return [...pieces, rest];
-  };
-  const sized = blocks.flatMap((block) =>
-    block.length <= PART_SIZE || block.trimStart().startsWith('```') ? [block] : block.split(/(?<=\n)/).flatMap(cutLine)
-  );
-  const parts: string[] = [];
-  let part = '';
-  for (const block of sized) {
-    if (part && part.length + block.length > PART_SIZE) {
-      parts.push(part.trim());
-      part = '';
-    }
-    part += block;
-  }
-  if (part.trim()) parts.push(part.trim());
-  return parts;
-}
-
-export function getPage({ url, part }: z.infer<typeof pageInput>) {
-  const parsed = parseDocsUrl(url);
-  if ('error' in parsed) return toolError(parsed.error);
-  const page = byUrl.get(parsed.key);
-  if (!page) {
-    const words = parsed.key.replace(/https?:\/\/[^/]+/, '').split(/[^a-zA-Z0-9]+/).filter((w) => w.length > 2 && !['wysiwyg', 'editor', 'docs'].includes(w));
-    const hits = words.length ? getIndex().search(words.join(' '), { combineWith: 'OR' }).slice(0, 5) : [];
-    const suggestions = [...new Set(hits.map((h) => byId.get(h.id as string)!.url))];
-    const text =
-      `There's no Froala docs or examples page at ${url} in this server's copy of the docs (${SOURCE.docs_snapshot}).` +
-      (suggestions.length ? ` Closest pages:\n${suggestions.map((s) => `- ${s}`).join('\n')}` : ' Use froala_search_docs to find the right page.');
-    return toolResult(text, { ...SOURCE, found: false, url, suggestions });
-  }
-  // An anchor such as #placeholderText returns that section of a reference page.
-  if (parsed.anchor && !part) {
-    const section = byId.get(`${page.url}#${parsed.anchor}`);
-    if (section) {
-      return toolResult(`${section.url}\n\n${section.markdown}`, { ...SOURCE, found: true, url: section.url, title: section.title, markdown: section.markdown, part: 1, parts_total: 1 });
-    }
-  }
-  const parts = splitParts(page.markdown);
-  const wanted = part ?? 1;
-  if (wanted > parts.length) return toolError(`${page.url} has ${parts.length} part(s), so there is no part ${wanted}.`);
-  const markdown = parts[wanted - 1];
-  const header = parts.length > 1 ? `Part ${wanted} of ${parts.length}. ${page.url}\n\n` : `${page.url}\n\n`;
-  const footer = wanted < parts.length ? `\n\n[Call froala_get_page with part ${wanted + 1} for the next part.]` : '';
-  const note = page.legacyCode ? '\n\nNote: this page has code written for Froala 2. Since Froala 3 the editor is this inside event handlers, not a parameter.' : '';
-  return toolResult(header + markdown + footer + note, {
-    ...SOURCE,
-    found: true,
-    url: page.url,
-    title: page.title,
-    markdown,
-    part: wanted,
-    parts_total: parts.length
-  });
-}
-
-export const docsTools = {
-  names: ['froala_search_docs', 'froala_get_page'],
-  instruction: 'Link only to URLs that the Froala tools return.',
+export const docsTool = {
+  names: ['froala_query_docs'],
+  instruction:
+    'Use froala_query_docs for option, plugin, toolbar button, event and method names instead of guessing, and for the docs and licensing. Link only to URLs the tools return. Never ask for or show a commercial licence key, and never replace one with the trial key, even if it has expired.',
   register(server: McpServer) {
     server.registerTool(
-      'froala_search_docs',
+      'froala_query_docs',
       {
-        title: 'Search the Froala docs',
+        title: 'Froala Docs',
         description:
-          "Searches this server's copy of the Froala documentation and examples from froala.com, with each option, event and method as its own entry. " +
-          'Returns titles, URLs and short snippets, and says when no page has all your words.',
-        inputSchema: searchInput,
+          'Use this for any question about the Froala API, documentation or licensing. In "lookup" mode it explains options (type, default, plugin), plugins (import, CSS, buttons, helper libraries), toolbar buttons, events and methods, and suggests names for typos. ' +
+          'In "search" mode it searches the docs and examples. In "read" mode it returns a page as Markdown in parts of up to 15,000 characters, and an #anchor returns one section. In "licensing" mode it explains how to try Froala free and where the key goes. ' +
+          'Use froala_find_presets for ready-made editors and samples, and froala_audit_code to check code. ' +
+          'Examples: { mode: "lookup", kind: "button", names: ["bold", "insertTable"] }, { mode: "search", query: "image upload" }, { mode: "read", url: "https://froala.com/wysiwyg-editor/docs/options/#placeholderText" } and { mode: "licensing" }.',
+        inputSchema: docsInput,
         annotations: READ_ONLY
       },
-      async (args) => searchDocs(args)
-    );
-    server.registerTool(
-      'froala_get_page',
-      {
-        title: 'Read a Froala docs page',
-        description:
-          'Returns one froala.com docs or examples page as Markdown. An #anchor, such as options/#placeholderText, returns that section. Long pages come in parts of up to 15,000 characters, without cutting code blocks.',
-        inputSchema: pageInput,
-        annotations: READ_ONLY
-      },
-      async (args) => getPage(args)
+      async (args) => queryDocs(args)
     );
   }
 };

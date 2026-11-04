@@ -1,0 +1,432 @@
+[
+  {
+    "id": "simple",
+    "title": "Simple editor",
+    "group": "Basic setups",
+    "use_when": "Comments, notes and team updates. Headings, bold, italic, links, images and lists. This is the setup every new project starts with.",
+    "features": ["history", "paragraphFormat", "basic", "link", "image", "lists"],
+    "phone_buttons": ["bold", "italic", "insertLink", "formatUL"],
+    "notes": []
+  },
+  {
+    "id": "comment-box",
+    "title": "Comment box",
+    "group": "Basic setups",
+    "use_when": "Comments and short replies with links, lists and emoji, and a character limit.",
+    "features": ["history", "basic", "strikeThrough", "link", "emoticons", "lists", "url", "charCounter"],
+    "options": {
+      "placeholderText": "Write a reply",
+      "toolbarSticky": false,
+      "heightMin": 96,
+      "heightMax": 260,
+      "charCounterMax": 1000,
+      "emoticonsUseImage": false,
+      "linkInsertButtons": ["linkBack"],
+      "linkAutoPrefix": "https://"
+    },
+    "notes": ["charCounterMax stops typing at 1,000 characters and shows a counter."]
+  },
+  {
+    "id": "blog-post",
+    "title": "Blog post",
+    "group": "Basic setups",
+    "use_when": "Posts people publish, with headings, images, video and tables.",
+    "features": ["history", "paragraphFormat", "basic", "link", "image", "video", "table", "lists", "quote", "codeView", "quickInsert"],
+    "notes": ["Uploads need a server. Set imageUploadURL and videoUploadURL to endpoints that store the file and return { link }."]
+  },
+  {
+    "id": "business-document",
+    "title": "Business document",
+    "group": "Basic setups",
+    "use_when": "Letters and reports with fonts, page breaks, tracked changes and Word in and out.",
+    "features": ["history", "paragraphFormat", "fontFamily", "fontSize", "basic", "table", "pageBreak", "align", "lists", "trackChanges", "findReplace", "importFromWord", "exportToWord", "wordPaste"],
+    "notes": ["Export to Word files open in Microsoft Word. For other apps, convert the HTML to DOCX on your server."]
+  },
+  {
+    "id": "document",
+    "title": "Document editor",
+    "group": "Basic setups",
+    "use_when": "Long documents such as contracts and reports, edited on a page-like sheet.",
+    "features": [
+      "history",
+      "print",
+      "paragraphFormat",
+      "fontFamily",
+      "fontSize",
+      "basic",
+      "colors",
+      "link",
+      "image",
+      "table",
+      "pageBreak",
+      "horizontalLine",
+      "align",
+      "lineHeight",
+      "lists",
+      "quote",
+      "fullscreen"
+    ],
+    "options": {
+      "documentReady": true
+    },
+    "notes": ["documentReady gives a page-like layout with settings suited to documents."]
+  },
+  {
+    "id": "advanced",
+    "title": "Advanced editor",
+    "group": "Demos",
+    "use_when": "A word processor in the browser with fonts, colors, tables, media and find and replace. This matches the toolbar on the Froala Demo page.",
+    "features": [
+      "history",
+      "print",
+      "paragraphFormat",
+      "fontFamily",
+      "fontSize",
+      "basic",
+      "colors",
+      "link",
+      "image",
+      "align",
+      "lists",
+      "indent",
+      "clearFormatting",
+      "table",
+      "video",
+      "quote",
+      "findReplace",
+      "codeView",
+      "specialCharacters"
+    ],
+    "options": {
+      "fontFamilySelection": true,
+      "fontSizeSelection": true,
+      "paragraphFormatSelection": true
+    },
+    "extensions": ["autoformat", "checklists", "footnotes", "template-variables", "table-of-contents", "show-blocks", "slash-commands-and-mentions", "spacing", "zoom-and-size-steps", "templates"],
+    "notes": []
+  },
+  {
+    "id": "everything",
+    "title": "Every feature",
+    "group": "Demos",
+    "use_when": "Seeing the whole editor before you trim it. Loads every bundled plugin, with the toolbar in the order of the Froala website.",
+    "all_plugins": true,
+    "features": [
+      "history",
+      "print",
+      "paragraphFormat",
+      "paragraphStyle",
+      "fontFamily",
+      "fontSize",
+      "basic",
+      "strikeThrough",
+      "colors",
+      "inlineStyle",
+      "inlineClass",
+      "link",
+      "linkToAnchor",
+      "image",
+      "video",
+      "file",
+      "table",
+      "codeSnippet",
+      "pageBreak",
+      "horizontalLine",
+      "emoticons",
+      "specialCharacters",
+      "align",
+      "lineHeight",
+      "lists",
+      "indent",
+      "quote",
+      "clearFormatting",
+      "ai",
+      "collaboration",
+      "findReplace",
+      "importFromWord",
+      "exportToWord",
+      "codeView",
+      "markdown",
+      "fullscreen",
+      "help",
+      "quickInsert",
+      "draggable",
+      "lineBreaker",
+      "charCounter",
+      "wordCounter",
+      "wordPaste",
+      "url",
+      "entities",
+      "codeBeautifier"
+    ],
+    "notes": ["This setup adds about 1.5 MB to your bundle. Trim it before you ship.", "aiSupplementalTermsAccepted confirms that you accept the Froala AI terms. Read them before you ship."],
+    "options": {
+      "aiSupplementalTermsAccepted": true
+    }
+  },
+  {
+    "id": "inline",
+    "title": "Inline editing",
+    "group": "Demos",
+    "use_when": "Editing text in place on the page. The toolbar appears when text is selected.",
+    "features": ["paragraphFormat", "bold", "italic", "link", "align"],
+    "options": {
+      "toolbarInline": true
+    },
+    "notes": ["Attach the editor to the element you want to edit, such as a heading or a section of the page."]
+  },
+  {
+    "id": "markdown",
+    "title": "Markdown",
+    "group": "Demos",
+    "use_when": "People who prefer writing Markdown and want to see the formatted result next to it.",
+    "features": ["history", "paragraphFormat", "bold", "italic", "link", "bulletList", "markdown"],
+    "phone_buttons": ["bold", "italic", "markdown"],
+    "notes": ["To start in Markdown mode, call this.markdown.toggle() in the initialized event."]
+  },
+  {
+    "id": "headless",
+    "title": "Headless editor",
+    "group": "Demos",
+    "use_when": "Your own toolbar and menus on the Froala editing engine. There is no Froala toolbar or popup.",
+    "features": ["paragraphFormat", "link", "lists", "align"],
+    "no_toolbar": true,
+    "options": {
+      "headless": true
+    },
+    "notes": [
+      "Your own controls call the editor API, for example editor.commands.bold(), editor.paragraphFormat.apply('H2'), editor.lists.format('UL'), editor.align.apply('center') and editor.link.insert(url, text)."
+    ]
+  },
+  {
+    "id": "help-desk",
+    "title": "Help desk reply",
+    "group": "Demos",
+    "use_when": "Support replies with the toolbar under the text, images and attachments.",
+    "features": ["history", "bold", "italic", "link", "image", "file", "emoticons", "lists"],
+    "phone_buttons": ["bold", "italic", "insertLink", "insertFile"],
+    "options": {
+      "toolbarBottom": true
+    },
+    "notes": ["File uploads need a server. Set fileUploadURL to an endpoint that stores the file and returns { link }."]
+  },
+  {
+    "id": "track-changes",
+    "title": "Track changes",
+    "group": "Demos",
+    "use_when": "Suggested edits that wait in the text and a side panel, where people accept or reject each one.",
+    "features": ["history", "paragraphFormat", "basic", "link", "lists", "collaboration"],
+    "phone_buttons": ["bold", "italic", "collabMode"],
+    "options": {
+      "collabConfig": {
+        "user": {
+          "id": "user-1",
+          "name": "Your user",
+          "role": "editor"
+        },
+        "panel": {
+          "defaultState": "expanded"
+        }
+      }
+    },
+    "notes": ["Replace collabConfig.user with the signed-in user. Add realTime to collabConfig to share suggestions between people."]
+  },
+  {
+    "id": "saas-form-field",
+    "title": "Admin form field",
+    "group": "Business applications",
+    "use_when": "A compact field for admin forms that saves, reloads and validates like any other input.",
+    "features": ["basic", "lists", "link", "url", "charCounter", "wordPaste"],
+    "options": {
+      "heightMin": 120,
+      "toolbarSticky": false
+    },
+    "notes": ["Read the value from the model. Validate its text, not its HTML, because an empty editor still holds markup."]
+  },
+  {
+    "id": "internal-wiki",
+    "title": "Internal wiki",
+    "group": "Business applications",
+    "use_when": "Team pages with headings, tables, code samples and links between pages.",
+    "features": ["history", "paragraphFormat", "basic", "link", "linkToAnchor", "table", "image", "codeSnippet", "lists", "findReplace"],
+    "extensions": ["table-of-contents"],
+    "notes": []
+  },
+  {
+    "id": "chat-composer",
+    "title": "Chat composer",
+    "group": "Business applications",
+    "use_when": "A small composer for messages and tickets, with emoji and links.",
+    "features": ["bold", "italic", "link", "lists", "emoticons", "url"],
+    "options": {
+      "toolbarBottom": true,
+      "placeholderText": "Write a message",
+      "heightMin": 60,
+      "heightMax": 200,
+      "emoticonsUseImage": false
+    },
+    "extensions": ["slash-commands-and-mentions"],
+    "notes": ["Read the message from the model or editor.html.get() when the user sends it, then clear it."]
+  },
+  {
+    "id": "cms-article",
+    "title": "CMS article",
+    "group": "CMS and publishing",
+    "use_when": "Articles with headings, images, embeds and clean HTML for search.",
+    "features": ["history", "paragraphFormat", "basic", "link", "linkToAnchor", "image", "video", "table", "specialCharacters", "lists", "quote", "codeView"],
+    "notes": ["Set imageUploadURL before publishing, so images are stored on your server."]
+  },
+  {
+    "id": "markdown-docs",
+    "title": "Markdown documentation",
+    "group": "CMS and publishing",
+    "use_when": "Documentation written in Markdown, with code blocks and tables.",
+    "features": ["history", "paragraphFormat", "basic", "link", "table", "codeSnippet", "lists", "markdown", "codeBeautifier"],
+    "notes": []
+  },
+  {
+    "id": "page-builder",
+    "title": "Landing page blocks",
+    "group": "CMS and publishing",
+    "use_when": "Pages built from blocks you insert, drag and style.",
+    "features": ["history", "paragraphStyle", "basic", "colors", "image", "video", "align", "quickInsert", "draggable", "lineBreaker"],
+    "notes": ["The Page builder whitepaper explains the approach. Find it with froala_find_presets and the query \"page builder\"."]
+  },
+  {
+    "id": "newsroom",
+    "title": "Newsroom",
+    "group": "CMS and publishing",
+    "use_when": "Several authors on one story, with comments, suggestions and versions.",
+    "features": ["history", "paragraphFormat", "basic", "link", "image", "quote", "collaboration"],
+    "options": {
+      "collabConfig": {
+        "user": {
+          "id": "user-1",
+          "name": "Your user",
+          "role": "editor"
+        }
+      }
+    },
+    "notes": ["Real-time sharing needs a sync server. Read the collaborative plugin guide with froala_query_docs."]
+  },
+  {
+    "id": "lms-lesson",
+    "title": "Course lesson",
+    "group": "Education",
+    "use_when": "Lessons with video, tables, symbols and checklists. Equations come from the MathType plugin.",
+    "features": ["history", "paragraphFormat", "basic", "image", "video", "table", "specialCharacters", "lists", "quote"],
+    "extensions": ["checklists"],
+    "notes": ["For equations, follow the wiris example from froala_find_presets.", "The Froala for LMS developers whitepaper has more detail. Find it with froala_find_presets and the query \"LMS\"."]
+  },
+  {
+    "id": "quiz-author",
+    "title": "Quiz author",
+    "group": "Education",
+    "use_when": "Questions with tables, symbols and a length limit.",
+    "features": ["history", "basic", "image", "table", "specialCharacters", "lists", "charCounter"],
+    "options": {
+      "charCounterMax": 2000
+    },
+    "notes": ["For equations, follow the wiris example from froala_find_presets."]
+  },
+  {
+    "id": "student-writing",
+    "title": "Student writing",
+    "group": "Education",
+    "use_when": "Essays and assignments with live word and character counts.",
+    "features": ["history", "paragraphFormat", "basic", "lists", "findReplace", "wordCounter", "charCounter"],
+    "notes": ["For spell checking, follow the web-spell-checker example from froala_find_presets."]
+  },
+  {
+    "id": "hr-proposal",
+    "title": "Offer letters and proposals",
+    "group": "Business documents",
+    "use_when": "Offer letters, policies and proposals from reusable templates, with tables and page breaks.",
+    "features": ["history", "paragraphFormat", "fontSize", "basic", "table", "pageBreak", "align", "lists", "trackChanges", "exportToWord"],
+    "extensions": ["template-variables", "checklists"],
+    "notes": []
+  },
+  {
+    "id": "insurance-letter",
+    "title": "Customer letters",
+    "group": "Business documents",
+    "use_when": "Letters drafted from a template, reviewed with tracked changes and sent as Word files.",
+    "features": ["history", "paragraphFormat", "fontFamily", "fontSize", "basic", "table", "pageBreak", "align", "trackChanges", "findReplace", "importFromWord", "exportToWord"],
+    "extensions": ["template-variables"],
+    "notes": []
+  },
+  {
+    "id": "contract-review",
+    "title": "Contract review",
+    "group": "Business documents",
+    "use_when": "Redlining a contract with tracked changes, starting from a Word file.",
+    "features": ["history", "basic", "pageBreak", "lineHeight", "trackChanges", "findReplace", "importFromWord", "exportToWord", "wordPaste"],
+    "notes": []
+  },
+  {
+    "id": "support-composer",
+    "title": "Support composer",
+    "group": "Customer communication",
+    "use_when": "Replies with signatures, personal fields and attachments.",
+    "features": ["history", "basic", "link", "image", "file", "emoticons", "lists", "charCounter", "wordPaste"],
+    "extensions": ["template-variables"],
+    "notes": []
+  },
+  {
+    "id": "crm-email",
+    "title": "CRM email",
+    "group": "Customer communication",
+    "use_when": "Sales emails with personal fields from your CRM records.",
+    "features": ["history", "paragraphFormat", "fontFamily", "fontSize", "basic", "colors", "link", "image", "table", "align"],
+    "options": {
+      "useClasses": false
+    },
+    "extensions": ["template-variables"],
+    "notes": ["useClasses set to false writes inline styles, which email clients need."]
+  },
+  {
+    "id": "newsletter",
+    "title": "Newsletter",
+    "group": "Customer communication",
+    "use_when": "Campaign emails with layout tables and images.",
+    "features": ["history", "paragraphFormat", "fontFamily", "basic", "colors", "link", "image", "table", "emoticons", "align", "codeView"],
+    "options": {
+      "useClasses": false
+    },
+    "notes": [
+      "useClasses set to false writes inline styles, which email clients need.",
+      "Images in emails need public URLs. Set imageUploadURL to an endpoint that stores the image and returns its URL.",
+      "Check the result in the email clients your readers use before sending."
+    ]
+  },
+  {
+    "id": "ai-review",
+    "title": "AI writing review",
+    "group": "AI and agents",
+    "use_when": "AI rewrites that arrive as suggestions your users accept or reject, on your own provider.",
+    "features": ["history", "paragraphFormat", "basic", "lists", "ai", "trackChanges"],
+    "options": {
+      "aiSupplementalTermsAccepted": true
+    },
+    "notes": [
+      "Pass your model with aiAssistRequest or aiAssistEndpoint. The ai-assist examples from froala_find_presets show both.",
+      "aiSupplementalTermsAccepted confirms that you accept the Froala AI terms. Read them before you ship."
+    ]
+  },
+  {
+    "id": "from-tinymce",
+    "title": "Moving from TinyMCE",
+    "group": "Switch from another editor",
+    "use_when": "Bringing TinyMCE content and settings across.",
+    "features": ["history", "paragraphFormat", "basic", "link", "image", "table", "lists", "codeView", "wordPaste"],
+    "notes": ["Read the TinyMCE migration guide with froala_query_docs and the query \"migrate from TinyMCE\"."]
+  },
+  {
+    "id": "from-ckeditor",
+    "title": "Moving from CKEditor",
+    "group": "Switch from another editor",
+    "use_when": "Bringing CKEditor 5 content and settings across.",
+    "features": ["history", "paragraphFormat", "basic", "link", "image", "table", "lists", "trackChanges", "codeView"],
+    "notes": ["Read the CKEditor migration guide with froala_query_docs and the query \"migrate from CKEditor\"."]
+  }
+]

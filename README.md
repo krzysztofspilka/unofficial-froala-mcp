@@ -1,40 +1,66 @@
 # Froala Rich Text Editor - MCP Server
 
-An MCP server for the [Froala WYSIWYG editor](https://froala.com/wysiwyg-editor/). It provides AI coding assistants with setup code for your framework, checks Froala code for common mistakes, and searches the official Froala documentation. It simplifies adding rich text editing to applications built with React, Vue, Angular, Next.js, Nuxt or Svelte, or with plain TypeScript.
+An MCP server for the [Froala rich text editor](https://froala.com/wysiwyg-editor/). It gives AI coding assistants tested setup code, ready-made presets, a code audit and the official Froala documentation, which makes rich text editing easy to add to an application in the framework of your choice or in plain TypeScript or JavaScript.
 
 This is an early release. Please report any issues to support@froala.com. Thank you for your help.
 
-[![Deploy to Cloudflare Workers](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/froala/froala-mcp)
-[![Add to Cursor](https://cursor.com/deeplink/mcp-install-dark.svg)](https://cursor.com/en/install-mcp?name=froala&config=eyJ1cmwiOiJodHRwczovL21jcC5mcm9hbGEuY29tL21jcCJ9)
+[![Add to Cursor](https://cursor.com/deeplink/mcp-install-dark.svg)](https://cursor.com/en/install-mcp?name=froala&config=eyJjb21tYW5kIjoibnB4IiwiYXJncyI6WyIteSIsIkBmcm9hbGEvbWNwIl19)
 
-[![Install in VS Code](https://img.shields.io/badge/VS_Code-Install_Server-0098FF?style=for-the-badge&logo=visualstudiocode&logoColor=white)](https://insiders.vscode.dev/redirect/mcp/install?name=froala&config=%7B%22type%22%3A%22http%22%2C%22url%22%3A%22https%3A%2F%2Fmcp.froala.com%2Fmcp%22%7D)
-[![Install in VS Code Insiders](https://img.shields.io/badge/VS_Code_Insiders-Install_Server-24bfa5?style=for-the-badge&logo=visualstudiocode&logoColor=white)](https://insiders.vscode.dev/redirect/mcp/install?name=froala&config=%7B%22type%22%3A%22http%22%2C%22url%22%3A%22https%3A%2F%2Fmcp.froala.com%2Fmcp%22%7D&quality=insiders)
-[![Add to Claude](https://img.shields.io/badge/Claude-Add_connector-D97757?style=for-the-badge&logo=anthropic&logoColor=white)](https://claude.ai/customize/connectors?modal=add-custom-connector&connectorName=Froala&connectorUrl=https%3A%2F%2Fmcp.froala.com%2Fmcp)
-[![MCP server](https://img.shields.io/badge/MCP-server-5865F2?style=for-the-badge&logo=modelcontextprotocol&logoColor=white)](https://modelcontextprotocol.io)
+[![Install in VS Code](https://img.shields.io/badge/VS_Code-Install_Server-0098FF?style=for-the-badge&logo=visualstudiocode&logoColor=white)](https://insiders.vscode.dev/redirect/mcp/install?name=froala&config=%7B%22command%22%3A%22npx%22%2C%22args%22%3A%5B%22-y%22%2C%22%40froala%2Fmcp%22%5D%7D)
+[![Install in VS Code Insiders](https://img.shields.io/badge/VS_Code_Insiders-Install_Server-24bfa5?style=for-the-badge&logo=visualstudiocode&logoColor=white)](https://insiders.vscode.dev/redirect/mcp/install?name=froala&config=%7B%22command%22%3A%22npx%22%2C%22args%22%3A%5B%22-y%22%2C%22%40froala%2Fmcp%22%5D%7D&quality=insiders)
 
-## Hosted server
+## Supported projects
+
+The server targets Froala 5.6.0.
+
+| Project    | `target`     | Tested with                                           |
+| ---------- | ------------ | ----------------------------------------------------- |
+| React      | `react`      | React 19.3 and Vite 8.3, in TypeScript and JavaScript |
+| Vue        | `vue`        | Vue 3.5 and Vite 8.3, in TypeScript and JavaScript    |
+| Angular    | `angular`    | Angular 22.2, with and without server rendering       |
+| Next.js    | `nextjs`     | Next.js 16.4 and Tailwind CSS 4                       |
+| Nuxt       | `nuxt`       | Nuxt 4.6                                              |
+| Svelte     | `svelte`     | Svelte 5.57 and SvelteKit 3.1                         |
+| TypeScript | `typescript` | TypeScript 7.0 and Vite 8.3                           |
+| JavaScript | `javascript` | Vite 8.3, or a web page with no build step            |
+
+## What a first setup gives you
+
+Every new project starts from the Simple preset, which uses the toolbar of the Froala website with undo and redo first.
+
+| File                           | Purpose                                                                                                          |
+| ------------------------------ | ---------------------------------------------------------------------------------------------------------------- |
+| `froala-enhancements`          | Adds safe pasting, keyboard access to the toolbar, screen reader names and clear upload messages to every editor |
+| `froala-preset`                | Holds the plugins, the CSS, the editor settings and the trial key                                                |
+| A component for your framework | Shows the editor                                                                                                 |
+
+## Tools
+
+| Tool                     | Purpose                                                                                           | Main inputs                                 |
+| ------------------------ | ------------------------------------------------------------------------------------------------- | ------------------------------------------- |
+| `froala_get_setup`       | Returns the install command and the files for your project                                        | `target`, `package_json`, `preset`          |
+| `froala_find_presets`    | Searches 31 presets, 89 samples, 6 whitepapers and 10 extensions                                  | `query`, `id`, `target`                     |
+| `froala_audit_code`      | Finds common mistakes, and returns the known issues that apply to your versions with tested fixes | `files`, `package_json`, `symptom`, `issue` |
+| `froala_query_docs`      | Looks up API names, searches and reads the documentation, and explains licensing                  | `mode`, `query`, `kind`, `names`, `url`     |
+| `froala_get_integration` | Returns guides for Tailwind CSS, TanStack, Salesforce, Next.js, Nuxt and Svelte                   | `name`, `target`                            |
+
+Two prompts are also available. `add-froala` adds Froala to a project, and `review-froala` reviews existing code.
+
+## Example requests
+
+- Add the Froala editor to this project.
+- Add a comment box with a 1,000 character limit.
+- The page is blank since I added Froala. Find out why.
+
+To make an assistant use the server every time, add this line to your project rules, for example in `CLAUDE.md`.
 
 ```text
-https://mcp.froala.com/mcp
+When you work with the Froala editor, use the Froala MCP tools instead of writing code from memory.
 ```
-
-Add this URL to any AI tool that supports remote MCP servers, or use one of the installation buttons above.
-
-## How it works
-
-```mermaid
-flowchart LR
-    A["AI coding assistant"] <--> S["Froala MCP server"]
-    S --- T1["Setup code and recipes"]
-    S --- T2["Code checks and workarounds"]
-    S --- T3["Documentation and API lookup"]
-```
-
-The assistant sends the project's `package.json` and receives setup code that matches the installed versions of Froala, Vite, Next.js, Nuxt or Angular. After writing the code, it sends the changed files to be checked. The server requires no account or API key, and every tool is read-only.
 
 ## Run the server locally
 
-To run the server on your own machine instead of using the hosted server, use the npm package, which requires Node.js 20 or newer. For example, run `claude mcp add froala -- npx -y @froala/mcp`, or add the following to a JSON configuration file.
+The npm package requires Node.js 20 or newer. For example, run `claude mcp add froala -- npx -y @froala/mcp`, or add the following to a JSON configuration file.
 
 ```json
 {
@@ -46,74 +72,27 @@ To run the server on your own machine instead of using the hosted server, use th
 
 ## Build with Froala
 
-- On localhost, Froala works fully without a license key.
-- On other domains, including preview deployments, Froala needs a trial or license key in the `key` setting. Without one, the editor shows an unlicensed banner and only bold, italic and underline are available.
-- The `froala_licensing` tool explains where the key belongs in each framework, and the [activation guide](https://froala.com/wysiwyg-editor/docs/activation/) describes how keys work.
-
-## Tools
-
-| Tool | Purpose | Main inputs |
-|---|---|---|
-| `froala_get_setup` | Returns the install command and files for your framework and versions | `framework`, `package_json` |
-| `froala_recipes` | Returns ready-made settings for comments, chat, email, documents and other uses | `use_case` |
-| `froala_check_code` | Detects common mistakes and suggests a fix for each | `files`, including `package.json` |
-| `froala_workarounds` | Lists fixes for known problems with your versions | `package_json` |
-| `froala_lookup` | Describes options, plugins, toolbar buttons, events and methods | `kind`, `name` or `names` |
-| `froala_search_docs` | Searches the Froala documentation and examples | `query` |
-| `froala_get_page` | Returns a documentation page or one of its sections | `url` |
-| `froala_licensing` | Explains license keys and where they belong in each framework | none |
-
-`froala_check_code` reports errors (confirmed problems), warnings (likely problems that should be confirmed) and tips (optional improvements). Two prompts are also available. `add-froala` guides an assistant through adding Froala to a project, and `review-froala` guides it through reviewing existing Froala code.
+- Every feature works with any key, on every host. The key only decides which notice the editor shows next to the "Powered by Froala" line.
+- Every preset uses the public trial key `TRIAL-LICENSE-KEY-FOR-FROALA-NOT-FOR-PRODUCTION-USE` unless you set your own key, so the key is never missing. The trial key is not for production.
+- A commercial key always takes priority. The server never replaces one, even if it has expired.
+- `froala_query_docs` in `licensing` mode explains every notice and where the key belongs in each framework, and the [activation guide](https://froala.com/wysiwyg-editor/docs/activation/) describes how keys work.
 
 ## Limits and privacy
 
-- The hosted server accepts 120 tool calls per minute from each IP address. Beyond that, it responds with HTTP 429 and a `Retry-After` header.
-- `froala_check_code` accepts up to 20 files and 200,000 characters, and returns up to 60 findings.
-- Each answer is limited to 25,000 characters.
-- The hosted server records the tool name, the HTTP status, the response time, the country and the client name. It never records the code or questions that you send.
-- The local version applies the same limits to input and answers, without the rate limit or any logging.
-
-## Run your own copy
-
-Use the **Deploy to Cloudflare** button above, or deploy the server manually.
-
-```bash
-git clone https://github.com/froala/froala-mcp.git
-cd froala-mcp
-npm install
-npx wrangler deploy
-```
-
-The rate limit is configured in `wrangler.jsonc`. To allow web pages to call the server from a browser, list their origins in the `ALLOWED_ORIGINS` variable.
+- `froala_audit_code` accepts up to 20 files and 200,000 characters, and returns up to 60 findings.
+- Each answer is limited to 30,000 characters. Long pages arrive in parts, and long lists arrive in pages.
+- The server requires no account or API key, reads only the data that ships with it, and never changes your files.
 
 ## Development
 
 ```bash
 npm install
-npm test             # run the unit tests
-npm run build        # build dist/stdio.js for the npm package
-npm run smoke        # call every tool through the local version
-npm run dev          # run the hosted version at http://localhost:8787/mcp
-npm run build:data   # rebuild the Froala data for a new release
+npm test
+npm run build
+npm run smoke
 ```
 
-`node scripts/call.mjs <tool> name=value` calls a single tool from the command line. The `eval/` folder contains scripts that test the setup code in new applications, described in [docs/EVALUATION.md](docs/EVALUATION.md).
-
-```text
-src/
-  server.ts        the list of tools
-  project.ts       reads package.json, and known problems that depend on versions
-  tools/           one file per tool
-  templates/       setup code for each framework
-  check/           how froala_check_code reads code, and its checks
-  worker.ts        hosted version (Cloudflare Workers)
-  stdio.ts         local version (npx @froala/mcp)
-content/           licensing text
-data/              Froala metadata and documentation, built by scripts/
-docs/              specification, research, evaluation and audit response
-```
-
-To remove a tool, for example the workarounds once a Froala release resolves them, delete its line in `src/server.ts`.
+[CONTRIBUTING.md](CONTRIBUTING.md) explains the project, and [docs/MAINTAINING.md](docs/MAINTAINING.md) explains the routine work. Test results are in [docs/EVALUATION.md](docs/EVALUATION.md).
 
 ## Bugs, security and license
 

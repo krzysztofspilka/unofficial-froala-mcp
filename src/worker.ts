@@ -1,4 +1,4 @@
-// Hosted version on Cloudflare Workers: https://mcp.froala.com/mcp
+// The hosted version, on Cloudflare Workers.
 // Workers treat every value exported from this file as an entry point, so it exports only the handler (and types).
 import { createMcpHandler } from '@modelcontextprotocol/server';
 import { createFroalaServer, TOOL_NAMES, VERSION } from './server.js';
@@ -11,7 +11,7 @@ interface RateLimiter {
 
 export interface Env {
   RATE_LIMITER?: RateLimiter;
-  /** Comma-separated origins allowed to call /mcp from a browser, e.g. "https://example.com". */
+  /** Comma-separated origins allowed to call /mcp from a browser, such as "https://example.com". */
   ALLOWED_ORIGINS?: string;
 }
 
@@ -49,22 +49,33 @@ async function readBody(request: Request): Promise<Uint8Array | 'too large'> {
 }
 
 const MCP_METHODS = new Set(['initialize', 'notifications/initialized', 'ping', 'tools/list', 'tools/call', 'prompts/list', 'prompts/get', 'resources/list']);
+/** More messages than this in one request are refused. Real clients send one. */
+const MAX_BATCH = 20;
 
-/** The JSON-RPC method of the first message and the tool name, each only if it is a known one. Nothing else is read. */
-function describeCall(body: Uint8Array): { method?: string; tool?: string } {
+interface Call {
+  method: string;
+  tool?: string;
+}
+
+/** The method and tool name of every message in the request, each only if it is a known one. Nothing else is read. */
+function describeCalls(body: Uint8Array): Call[] {
+  let parsed: unknown;
   try {
-    const parsed = JSON.parse(new TextDecoder().decode(body)) as unknown;
-    const first = (Array.isArray(parsed) ? parsed[0] : parsed) as { method?: unknown; params?: { name?: unknown } } | undefined;
-    const method = typeof first?.method === 'string' ? (MCP_METHODS.has(first.method) ? first.method : 'other') : undefined;
-    const name = first?.params?.name;
-    return { method, tool: method === 'tools/call' && typeof name === 'string' && TOOL_NAMES.includes(name) ? name : undefined };
+    parsed = JSON.parse(new TextDecoder().decode(body));
   } catch {
-    return {};
+    return [];
   }
+  const messages = (Array.isArray(parsed) ? parsed : [parsed]) as ({ method?: unknown; params?: { name?: unknown } } | null)[];
+  return messages.flatMap((message) => {
+    if (typeof message?.method !== 'string') return [];
+    const method = MCP_METHODS.has(message.method) ? message.method : 'other';
+    const name = message.params?.name;
+    return [{ method, tool: method === 'tools/call' && typeof name === 'string' && TOOL_NAMES.includes(name) ? name : undefined }];
+  });
 }
 
 /**
- * Browsers send an Origin header; AI tools and servers usually don't. Requests without one are allowed.
+ * Browsers send an Origin header; AI tools and servers usually do not. Requests without one are allowed.
  * Requests from a browser page are allowed only from local development pages (such as MCP Inspector)
  * or the origins listed in ALLOWED_ORIGINS, as the MCP specification asks of HTTP servers.
  */
@@ -78,8 +89,27 @@ function originAllowed(origin: string | null, env: Env): boolean {
     .includes(origin);
 }
 
-/** The client's name and version from its user agent, e.g. "claude-code/2.1.0", at most 40 characters. */
+const ALLOWED_HEADERS = 'content-type, accept, mcp-protocol-version, mcp-session-id, mcp-method, mcp-name, last-event-id, authorization';
+
+/** What a browser needs to call this server from an allowed page. Calls from AI tools send no Origin and get nothing extra. */
+const corsHeaders = (origin: string | null): Record<string, string> =>
+  origin
+    ? {
+        'access-control-allow-origin': origin,
+        'access-control-expose-headers': 'mcp-session-id, mcp-protocol-version, retry-after',
+        vary: 'origin'
+      }
+    : {};
+
+/** The client's name and version from its user agent, such as "claude-code/2.1.0", at most 40 characters. */
 const clientOf = (userAgent: string | null) => (userAgent?.split(/\s/)[0] ?? 'unknown').replace(/[^\w./-]/g, '').slice(0, 40) || 'unknown';
+
+/** Adds headers to a response from the MCP library. */
+function withHeaders(response: Response, headers: Record<string, string>): Response {
+  const merged = new Response(response.body, response);
+  for (const [name, value] of Object.entries(headers)) merged.headers.set(name, value);
+  return merged;
+}
 
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
@@ -89,43 +119,71 @@ export default {
       return json(200, { ok: true, server: VERSION, froala: FROALA_VERSION });
     }
     if (url.pathname === '/' && request.method === 'GET') {
-      return new Response('Froala MCP server. Connect your AI tool to /mcp on this host. Setup: https://github.com/froala/froala-mcp\n', {
+      return new Response('Froala MCP server. Connect your AI tool to /mcp on this host.\n', {
         headers: { 'content-type': 'text/plain; charset=utf-8' }
       });
     }
     if (url.pathname !== '/mcp') return new Response('Not found\n', { status: 404 });
-    if (!originAllowed(request.headers.get('origin'), env)) return json(403, { error: 'Requests from this website are not allowed.' });
+    const origin = request.headers.get('origin');
+    if (!originAllowed(origin, env)) return json(403, { error: 'Requests from this website are not allowed.' });
+    const cors = corsHeaders(origin);
 
-    const body = await readBody(request);
-    if (body === 'too large') return json(413, { error: 'The request is too large. Send at most 200,000 characters of code.' });
-    const call = request.method === 'POST' ? describeCall(body) : {};
-
-    // The limit counts tool calls only, so connecting and listing tools never use it up.
-    if (env.RATE_LIMITER && call.method === 'tools/call') {
-      const { success } = await env.RATE_LIMITER.limit({ key: request.headers.get('cf-connecting-ip') ?? 'unknown' });
-      if (!success) return json(429, { error: RATE_LIMIT_MESSAGE }, { 'retry-after': '60' });
+    if (request.method === 'OPTIONS') {
+      return new Response(null, {
+        status: 204,
+        headers: { ...cors, 'access-control-allow-methods': 'GET, POST, DELETE, OPTIONS', 'access-control-allow-headers': ALLOWED_HEADERS, 'access-control-max-age': '86400' }
+      });
     }
 
     const started = Date.now();
+    /** Statistics only. Arguments, code and questions are never logged, and a tool name must be a known tool. */
+    const logCall = (status: number, calls: Call[]) => {
+      const tools = calls.filter((call) => call.method === 'tools/call').map((call) => call.tool ?? 'unknown tool');
+      const cf = (request as Request & { cf?: { country?: string } }).cf;
+      console.log(
+        JSON.stringify({
+          event: 'mcp',
+          call: calls[0]?.tool ?? calls[0]?.method ?? request.method,
+          calls: calls.length,
+          tools,
+          http_status: status,
+          ms: Date.now() - started,
+          country: cf?.country ?? null,
+          client: clientOf(request.headers.get('user-agent'))
+        })
+      );
+    };
+
+    const body = await readBody(request);
+    if (body === 'too large') {
+      logCall(413, []);
+      return json(413, { error: 'The request is too large. Send at most 200,000 characters of code.' }, cors);
+    }
+    const calls = request.method === 'POST' ? describeCalls(body) : [];
+    if (calls.length > MAX_BATCH) {
+      logCall(400, calls);
+      return json(400, { error: `Send at most ${MAX_BATCH} messages in one request.` }, cors);
+    }
+
+    // Every tool call in the request counts. Connecting and listing tools never use up the limit.
+    const toolCalls = calls.filter((call) => call.method === 'tools/call');
+    if (env.RATE_LIMITER) {
+      for (const _call of toolCalls) {
+        const { success } = await env.RATE_LIMITER.limit({ key: request.headers.get('cf-connecting-ip') ?? 'unknown' });
+        if (!success) {
+          logCall(429, calls);
+          return json(429, { error: RATE_LIMIT_MESSAGE }, { ...cors, 'retry-after': '60' });
+        }
+      }
+    }
+
     const forwarded = new Request(request.url, {
       method: request.method,
       headers: request.headers,
       body: ['GET', 'HEAD'].includes(request.method) ? undefined : body
     });
     const response = await handler.fetch(forwarded);
-
-    // Statistics only. Arguments, code and questions are never logged, and the call name must be a known tool.
-    const cf = (request as Request & { cf?: { country?: string } }).cf;
-    console.log(
-      JSON.stringify({
-        event: 'mcp',
-        call: call.tool ?? (call.method === 'tools/call' ? 'unknown tool' : (call.method ?? request.method)),
-        http_status: response.status,
-        ms: Date.now() - started,
-        country: cf?.country ?? null,
-        client: clientOf(request.headers.get('user-agent'))
-      })
-    );
-    return response;
+    logCall(response.status, calls);
+    return withHeaders(response, cors);
   }
 };

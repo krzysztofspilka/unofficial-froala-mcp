@@ -1,0 +1,34 @@
+name: Fresh apps
+
+# Framework starters change without notice, so this runs every week and whenever someone asks.
+on:
+  schedule:
+    - cron: '0 6 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  apps:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - run: npx playwright-core install --with-deps chromium
+      - run: npm run test:apps -- "$RUNNER_TEMP/apps"
+        env:
+          CHROME_CHANNEL: chromium
+      - uses: actions/upload-artifact@v5
+        if: always()
+        with:
+          name: results
+          path: |
+            ${{ runner.temp }}/apps/results.json
+            ${{ runner.temp }}/apps/*.png
